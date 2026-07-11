@@ -37,3 +37,11 @@ class FonteNoticias(Protocol):
     def buscar(self, consulta: str, *, limite: int = 5) -> list[Noticia]:
         """Notícias mais recentes para a consulta. Pode retornar [] (degradação)."""
         ...
+
+
+class ModeloLLM(Protocol):
+    """LLM que gera a narrativa. Recebe prompts prontos (grounding é do chamador)."""
+
+    def completar(self, system: str, user: str) -> str:
+        """Gera texto a partir de um prompt system+user. Levanta ErroModeloLLM em falha."""
+        ...
