@@ -1,5 +1,11 @@
 # Desafio GenAI — Relatório Automatizado de SRAG
 
+![coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
+![tests](https://img.shields.io/badge/pytest-29%20passing-brightgreen)
+![dbt tests](https://img.shields.io/badge/dbt%20tests-34%20passing-brightgreen)
+![SonarQube](https://img.shields.io/badge/SonarQube-0%20bugs%20%C2%B7%200%20vulns-brightgreen)
+![arch](https://img.shields.io/badge/arquitetura-hexagonal%20%2B%20medallion-blue)
+
 PoC de um **agente de IA generativa** (LangGraph) que consulta **dados reais de SRAG**
 (Open DATASUS / SIVEP-Gripe) e **notícias em tempo real** para gerar um **relatório
 automatizado** em PDF, com as métricas exigidas, dois gráficos e uma narrativa de contexto
@@ -67,7 +73,7 @@ flowchart TD
 | Serviço | Papel |
 |---|---|
 | `postgres` | store analítico servido (camada gold) |
-| `dados` | job de ETL: EL (Python → bronze) + **dbt** (silver/gold) com testes de dados |
+| `dados` | job de ETL medallion: EL (Python → bronze) + **dbt** (staging→intermediate→marts, **star schema**) com testes de dados |
 | `backend` | FastAPI + agente LangGraph + tools + geração do PDF |
 | `grafana` | dashboard interativo (lê a gold) |
 

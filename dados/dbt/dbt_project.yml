@@ -3,16 +3,27 @@ version: "1.0.0"
 profile: srag
 
 model-paths: ["models"]
+seed-paths: ["seeds"]
 macro-paths: ["macros"]
 test-paths: ["tests"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
+# Medallion mapeado ao layering idiomático dbt:
+#   bronze (source)  →  silver (staging + intermediate)  →  gold (marts: dims + fato)
 models:
   srag:
-    silver:
+    staging:
+      +schema: silver
+      +materialized: view
+    intermediate:
       +schema: silver
       +materialized: table
-    gold:
+    marts:
       +schema: gold
       +materialized: table
+      +persist_docs: { relation: true, columns: true }
+
+seeds:
+  srag:
+    +schema: gold

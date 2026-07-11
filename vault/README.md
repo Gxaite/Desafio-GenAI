@@ -22,4 +22,4 @@ serve de trilha de auditoria e alimenta o README do repositório. Requisitos do 
 
 ## Decisões
 - [[roadmap]] — plano de implementação (MVP → PoC completa).
-- `decisoes/` — ADRs 0001–0015 (uma nota por decisão, com contexto e alternativas).
+- `decisoes/` — ADRs 0001–0016 (uma nota por decisão, com contexto e alternativas).

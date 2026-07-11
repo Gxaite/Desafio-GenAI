@@ -1,0 +1,61 @@
+version: 2
+
+models:
+  - name: dim_uf
+    description: Dimensão de UF (sigla → nome e região), a partir do seed versionado.
+    columns:
+      - name: uf
+        description: Sigla da UF (PK). 'NA' para desconhecida.
+        data_tests: [not_null, unique]
+      - name: uf_nome
+        description: Nome da UF.
+      - name: regiao
+        description: Região geográfica (Norte, Nordeste, Centro-Oeste, Sudeste, Sul).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
+
+  - name: dim_data
+    description: Dimensão calendário cobrindo o intervalo de datas de sintoma dos casos.
+    columns:
+      - name: data
+        description: Data (PK).
+        data_tests: [not_null, unique]
+      - name: ano_mes
+        description: Competência mensal (YYYY-MM), usada na série de 12 meses.
+
+  - name: fct_srag_diario
+    description: >
+      Fato agregado de SRAG por (dia do 1º sintoma, UF). Medidas aditivas; grão único.
+      Fonte das 4 métricas e dos 2 gráficos. Só contagens — servido, sem microdado.
+    columns:
+      - name: dt
+        description: Data do 1º sintoma (FK → dim_data.data).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_data')
+                field: data
+      - name: uf
+        description: UF de residência (FK → dim_uf.uf).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_uf')
+                field: uf
+      - name: casos
+        description: Total de casos no dia/UF.
+        data_tests: [not_null]
+
+  - name: gold_mart_srag_diario
+    description: >
+      View de serviço (contrato do backend/Grafana): fato denormalizado com dim_uf.
+      Mantém os nomes de coluna esperados pela camada de tools.
+    columns:
+      - name: dt
+        data_tests: [not_null]
+      - name: uf
+        data_tests: [not_null]

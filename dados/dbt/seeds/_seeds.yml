@@ -1,0 +1,11 @@
+version: 2
+
+seeds:
+  - name: seed_uf
+    description: Mapa UF (sigla) → nome e região. Fonte da dim_uf.
+    columns:
+      - name: uf
+        description: Sigla da UF (chave).
+        data_tests: [not_null, unique]
+      - name: regiao
+        description: Região geográfica.

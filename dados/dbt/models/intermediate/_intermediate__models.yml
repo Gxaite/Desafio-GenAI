@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: int_srag__casos
+    description: >
+      Casos de SRAG deduplicados por notificação (1 linha/caso) com flags de negócio
+      (óbito, UTI, vacinação e "conhecido") que alimentam o fato agregado.
+    columns:
+      - name: nu_notificacao
+        description: Número da notificação — chave do caso.
+        data_tests: [not_null, unique]
+      - name: dt_sintomas
+        description: Data dos primeiros sintomas.
+        data_tests: [not_null]
+      - name: uf
+        description: UF de residência.
+        data_tests: [not_null]
+      - name: evolucao
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["1", "2", "3", "9"]
+              config: { severity: warn }
+      - name: uti
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["1", "2", "9"]
+              config: { severity: warn }
+      - name: vacina_covid
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["1", "2", "9"]
+              config: { severity: warn }

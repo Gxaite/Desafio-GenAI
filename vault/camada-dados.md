@@ -19,23 +19,33 @@ Motor: **EL em Python + dbt** ([[adr-0015-dbt-medallion]]).
   (sintoma na virada de ano), não duplicatas. As séries agregam por `DT_SIN_PRI`, então cada
   caso conta uma vez.
 
-## Camadas medallion
+## Medallion + layering idiomático dbt
 
-| Camada | Objeto | O que é | Motor |
+Medallion mapeado ao layering dbt (**staging → intermediate → marts**) e **modelagem
+dimensional** (star schema) na gold ([[adr-0016-modelagem-dimensional]]):
+
+| Camada | Objeto (schema) | O que é | Materialização |
 |---|---|---|---|
-| 🥉 **bronze** | `bronze.srag_raw` | landing bruto (texto), 1 linha/registro + arquivo de origem. Só as **~6 colunas** necessárias às [[metricas]] (minimização) | EL (Python, `COPY`) |
-| 🥈 **silver** | `silver.srag_casos` | limpo, tipado (data ISO→`date`) e **deduplicado** por `NU_NOTIFIC`; 1 linha/caso | dbt |
-| 🥇 **gold** | `gold.mart_srag_diario` | **agregado** por (dia, UF): `casos` + contagens de `EVOLUCAO`/`UTI`/`VACINA_COV`. Único servido | dbt |
+| 🥉 **bronze** | `bronze.srag_raw` | landing bruto (texto) + `arquivo_origem`. Só as **~6 colunas** necessárias (minimização LGPD) | EL Python (`COPY`) |
+| 🥈 **silver / staging** | `silver.stg_srag__casos` | 1:1 da fonte: renomeia, tipa (data ISO→`date`), normaliza vazios | view |
+| 🥈 **silver / intermediate** | `silver.int_srag__casos` | **dedup** por notificação + flags de negócio (`is_obito`, `foi_uti`, `vacinado`, `*_conhecido`) | table |
+| 🥇 **gold / dims** | `gold.dim_uf`, `gold.dim_data` | dimensões: UF (via **seed** → nome/região) e calendário | table |
+| 🥇 **gold / fato** | `gold.fct_srag_diario` | **fato** grão (dia, UF): medidas aditivas; FKs p/ dims | table |
+| 🥇 **gold / serviço** | `gold.gold_mart_srag_diario` | **view de serviço** (contrato do backend/Grafana): fato + `dim_uf` (nome/região) | view |
 
-As 4 [[metricas]] e os 2 gráficos derivam do **gold** por SQL (denominadores usam só
-valores conhecidos: 1/2). Testes `dbt` (`not_null`, `unique`, `accepted_values`, grão
-único) validam cada camada.
+As 4 [[metricas]] e os 2 gráficos derivam do **fato** (via view de serviço). Denominadores
+usam só valores conhecidos (1/2).
+
+**Qualidade de dados (dbt tests):** `not_null`, `unique`, `accepted_values`, **relationships**
+(fato → dimensões), grão único e coerência de medidas (não-negativas, sub-contagens ≤ total).
+**Lineage** declarado até o relatório e o Grafana via `exposures`. Docs persistidos como
+comentários no Postgres (`persist_docs`).
 
 ## Princípios
-- ETL **determinístico e idempotente** — `TRUNCATE`+recarrega bronze; dbt reconstrói
-  silver/gold ([[qualidade-governanca]]).
+- ETL **determinístico e idempotente** — `TRUNCATE`+recarrega bronze; `dbt build` reconstrói
+  seed + staging + intermediate + marts + testes ([[qualidade-governanca]]).
 - Proveniência registrada em `bronze.etl_run` (linhas lidas, arquivos, timestamp).
 - **Só a gold cruza a fronteira** para consumo; nenhum agregado expõe indivíduo. O bruto
-  minimizado transita por bronze/silver (trade-off documentado em [[adr-0015-dbt-medallion]]).
+  minimizado transita por bronze/silver (trade-off em [[adr-0015-dbt-medallion]]).
 
 Consumida por → [[camada-tools]] (backend) e [[arquitetura]] (Grafana).

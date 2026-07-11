@@ -1,0 +1,24 @@
+version: 2
+
+exposures:
+  - name: relatorio_srag_pdf
+    label: Relatório SRAG (PDF)
+    type: application
+    maturity: high
+    url: http://localhost:8000/relatorio
+    description: Relatório PDF gerado pelo agente — 4 métricas + 2 gráficos + narrativa.
+    depends_on:
+      - ref('gold_mart_srag_diario')
+    owner:
+      name: Gabriel Scheidt
+
+  - name: dashboard_grafana_srag
+    label: Dashboard SRAG (Grafana)
+    type: dashboard
+    maturity: high
+    url: http://localhost:3000/d/srag-overview
+    description: Dashboard interativo "SRAG — Visão Geral".
+    depends_on:
+      - ref('gold_mart_srag_diario')
+    owner:
+      name: Gabriel Scheidt
