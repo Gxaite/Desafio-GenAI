@@ -162,7 +162,8 @@ Os adapters de I/O ficam fora da métrica de cobertura (testados por integraçã
 
 Python · Docker · **Postgres** · **dbt** (medallion) · **FastAPI** · **LangGraph** ·
 **Claude via OpenRouter** · **NewsAPI** · **Plotly + WeasyPrint** (PDF) · **Grafana** ·
-`structlog` · `tenacity` · **uv/ruff/mypy/pytest**. Tracing opcional via **LangSmith**.
+`structlog` · `tenacity` · **uv/ruff/mypy/pytest**. Tracing de LLM opcional via **OpenRouter
+Broadcast → LangSmith** (config no painel do OpenRouter, sem código).
 
 ## Documentação
 

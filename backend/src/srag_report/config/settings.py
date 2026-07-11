@@ -30,11 +30,7 @@ class Settings(BaseSettings):
 
     # ── NewsAPI ──
     newsapi_key: str = ""
-
-    # ── LangSmith (tracing opcional dos agentes) ──
-    langchain_api_key: str = ""
-    langchain_project: str = "srag-report"
-    langchain_endpoint: str = "https://api.smith.langchain.com"
+    # Tracing de LLM: via OpenRouter Broadcast → LangSmith (painel do OpenRouter, sem código).
 
     @property
     def database_url(self) -> str:
