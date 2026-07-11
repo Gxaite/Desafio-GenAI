@@ -54,7 +54,7 @@
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
       "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
       "options": { "xField": "mes", "showValue": "never", "legend": { "showLegend": false } },
-      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT to_char(date_trunc('month',dt),'MM/YYYY') AS mes, sum(casos) AS casos FROM gold.gold_mart_srag_diario WHERE dt > (SELECT max(dt) FROM gold.gold_mart_srag_diario) - INTERVAL '12 months' GROUP BY date_trunc('month',dt) ORDER BY date_trunc('month',dt)" } ]
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT to_char(date_trunc('month',dt),'MM/YYYY') AS mes, sum(casos) AS casos FROM gold.gold_mart_srag_diario WHERE date_trunc('month',dt) > date_trunc('month',(SELECT max(dt) FROM gold.gold_mart_srag_diario)) - INTERVAL '12 months' GROUP BY date_trunc('month',dt) ORDER BY date_trunc('month',dt)" } ]
     },
     {
       "id": 7, "type": "barchart", "title": "Casos por UF (30d, top 12)",
