@@ -5,7 +5,7 @@ Puros: sem I/O, sem frameworks além do pydantic (validação = guardrail).
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -62,3 +62,12 @@ class Noticia(BaseModel):
     url: str
     publicado_em: date | None = None
     descricao: str | None = None
+
+
+class EventoAuditoria(BaseModel):
+    """Um evento da trilha de auditoria do agente (uma linha por passo)."""
+
+    no: str
+    tipo: str  # tool | llm | fallback | decisao
+    detalhe: str
+    ts: datetime

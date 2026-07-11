@@ -1,0 +1,76 @@
+{
+  "uid": "srag-overview",
+  "title": "SRAG — Visão Geral",
+  "tags": ["srag", "saude"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "",
+  "time": { "from": "now-1y", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Taxa de mortalidade (30d)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "color": { "mode": "thresholds" }, "thresholds": { "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 5 }, { "color": "red", "value": 10 } ] } }, "overrides": [] },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT round(100.0*sum(ev_obito)/nullif(sum(ev_cura+ev_obito+ev_obito_outras),0),2) AS valor FROM gold.gold_mart_srag_diario WHERE dt > (SELECT max(dt) FROM gold.gold_mart_srag_diario) - INTERVAL '30 days'" } ]
+    },
+    {
+      "id": 2, "type": "stat", "title": "Ocupação de UTI (30d, proxy)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT round(100.0*sum(uti_sim)/nullif(sum(uti_sim+uti_nao),0),2) AS valor FROM gold.gold_mart_srag_diario WHERE dt > (SELECT max(dt) FROM gold.gold_mart_srag_diario) - INTERVAL '30 days'" } ]
+    },
+    {
+      "id": 3, "type": "stat", "title": "Vacinação (30d, proxy)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT round(100.0*sum(vac_sim)/nullif(sum(vac_sim+vac_nao),0),2) AS valor FROM gold.gold_mart_srag_diario WHERE dt > (SELECT max(dt) FROM gold.gold_mart_srag_diario) - INTERVAL '30 days'" } ]
+    },
+    {
+      "id": 4, "type": "stat", "title": "Aumento de casos (30d vs anterior)",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "color": { "mode": "thresholds" }, "thresholds": { "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 0 } ] } }, "overrides": [] },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT round(100.0*(sum(casos) FILTER (WHERE dt > t.m - INTERVAL '30 days') - sum(casos) FILTER (WHERE dt <= t.m - INTERVAL '30 days' AND dt > t.m - INTERVAL '60 days')) / nullif(sum(casos) FILTER (WHERE dt <= t.m - INTERVAL '30 days' AND dt > t.m - INTERVAL '60 days'),0),2) AS valor FROM gold.gold_mart_srag_diario CROSS JOIN (SELECT max(dt) m FROM gold.gold_mart_srag_diario) t" } ]
+    },
+    {
+      "id": 5, "type": "barchart", "title": "Casos diários — últimos 30 dias",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "xField": "dia", "showValue": "never", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT to_char(dt,'DD/MM') AS dia, sum(casos) AS casos FROM gold.gold_mart_srag_diario WHERE dt > (SELECT max(dt) FROM gold.gold_mart_srag_diario) - INTERVAL '30 days' GROUP BY dt ORDER BY dt" } ]
+    },
+    {
+      "id": 6, "type": "barchart", "title": "Casos mensais — últimos 12 meses",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
+      "options": { "xField": "mes", "showValue": "never", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT to_char(date_trunc('month',dt),'MM/YYYY') AS mes, sum(casos) AS casos FROM gold.gold_mart_srag_diario WHERE dt > (SELECT max(dt) FROM gold.gold_mart_srag_diario) - INTERVAL '12 months' GROUP BY date_trunc('month',dt) ORDER BY date_trunc('month',dt)" } ]
+    },
+    {
+      "id": 7, "type": "barchart", "title": "Casos por UF (30d, top 12)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "xField": "uf", "showValue": "never", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT uf, sum(casos) AS casos FROM gold.gold_mart_srag_diario WHERE dt > (SELECT max(dt) FROM gold.gold_mart_srag_diario) - INTERVAL '30 days' GROUP BY uf ORDER BY casos DESC LIMIT 12" } ]
+    },
+    {
+      "id": 8, "type": "table", "title": "Execuções do agente (auditoria)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "showHeader": true },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT executado_em AS \"Execução\", referencia AS \"Referência\", run_id AS \"Run ID\" FROM auditoria.agente_run ORDER BY executado_em DESC LIMIT 20" } ]
+    }
+  ]
+}

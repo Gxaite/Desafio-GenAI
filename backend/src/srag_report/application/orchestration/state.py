@@ -3,21 +3,10 @@
 from __future__ import annotations
 
 import operator
-from datetime import date, datetime
+from datetime import date
 from typing import Annotated, TypedDict
 
-from pydantic import BaseModel
-
-from srag_report.domain.models import Metrica, Noticia, SeriesGraficos
-
-
-class EventoAuditoria(BaseModel):
-    """Um evento da trilha de auditoria (uma linha por passo do agente)."""
-
-    no: str
-    tipo: str  # tool | llm | fallback | decisao
-    detalhe: str
-    ts: datetime
+from srag_report.domain.models import EventoAuditoria, Metrica, Noticia, SeriesGraficos
 
 
 class EstadoRelatorio(TypedDict, total=False):

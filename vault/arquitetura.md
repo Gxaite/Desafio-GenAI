@@ -84,7 +84,7 @@ Desafio-GenAI/
         │   ├── data/postgres_repo.py     # RepositorioDados sobre Postgres
         │   ├── news/newsapi_client.py    # → [[adr-0002-fonte-noticias]]
         │   ├── llm/openrouter_client.py  # → [[adr-0001-provedor-llm]]
-        │   ├── report/{charts.py,pdf_renderer.py}  # matplotlib + WeasyPrint
+        │   ├── report/{charts.py,pdf_renderer.py}  # Plotly + WeasyPrint
         │   └── resilience/               # retry/timeout/circuit breaker
         ├── observability/        # logging.py · tracing.py · audit.py
         ├── config/settings.py    # pydantic-settings (lê o .env)
@@ -135,7 +135,7 @@ Serviços no `docker-compose.yml` da raiz, `.env` único, healthchecks e `depend
 | API + agente | **FastAPI** + `langgraph` + `langchain-openai` | serviço único, grafo auditável |
 | LLM | Claude via **OpenRouter** (`ChatOpenAI` + `base_url`) | flexível, troca por config |
 | Validação/tools | `pydantic` | schemas tipados = guardrails |
-| Gráficos / Relatório | `matplotlib` → Markdown → **WeasyPrint** | os 2 gráficos + PDF final |
+| Gráficos / Relatório | **Plotly** (kaleido) → HTML → **WeasyPrint** | os 2 gráficos + PDF final |
 | Notícias | `requests` / `newsapi-python` | NewsAPI ([[adr-0002-fonte-noticias]]) |
 | Resiliência | `tenacity` | retries/backoff/circuit breaker |
 | Observabilidade | `structlog` + OpenTelemetry | logs JSON + tracing + auditoria |

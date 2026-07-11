@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Response
 
+from srag_report.application.orchestration import construir_grafo
 from srag_report.application.relatorio import gerar_relatorio_pdf
 from srag_report.application.tools import calcular_metricas
 from srag_report.composition import montar_dependencias
@@ -39,19 +40,29 @@ def health_db() -> dict[str, str]:
 @app.get("/metricas")
 def metricas() -> list[Metrica]:
     """As 4 métricas dos últimos 30 dias (JSON)."""
-    repo, _fonte, _llm = montar_dependencias()
+    repo, _fonte, _llm, _aud = montar_dependencias()
     try:
         return calcular_metricas(repo)
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+@app.get("/agente/grafo", response_class=Response)
+def agente_grafo() -> Response:
+    """Diagrama do grafo do agente (Mermaid) — visualização do fluxo de orquestração."""
+    repo, fonte, llm, _aud = montar_dependencias()
+    mermaid = construir_grafo(repo, fonte, llm).get_graph().draw_mermaid()
+    return Response(content=mermaid, media_type="text/plain; charset=utf-8")
+
+
 @app.post("/relatorio")
 def relatorio() -> Response:
     """Gera o relatório completo (métricas + gráficos + narrativa) em PDF."""
-    repo, fonte, llm = montar_dependencias()
+    repo, fonte, llm, auditoria = montar_dependencias()
     try:
-        pdf, estado = gerar_relatorio_pdf(repo, fonte, llm, settings.openrouter_model_narrative)
+        pdf, estado = gerar_relatorio_pdf(
+            repo, fonte, llm, settings.openrouter_model_narrative, auditoria=auditoria
+        )
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     nome = f"relatorio-srag-{estado['referencia']}.pdf"

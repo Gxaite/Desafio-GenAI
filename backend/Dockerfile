@@ -17,9 +17,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 WORKDIR /app
 
-COPY pyproject.toml ./
+# 1) Camada de dependências (cacheada por pyproject+lock): só reinstala se as deps mudarem.
+COPY pyproject.toml uv.lock ./
+RUN uv export --frozen --no-emit-project --no-dev --no-hashes -o /tmp/requirements.txt \
+    && uv pip install --system --no-cache -r /tmp/requirements.txt
+
+# 2) Código do projeto: mudanças aqui NÃO reinstalam as deps (build leve).
 COPY src ./src
-RUN uv pip install --system --no-cache .
+RUN uv pip install --system --no-cache --no-deps .
 
 RUN useradd -m app && chown -R app /app
 USER app

@@ -27,4 +27,4 @@ As 4 métricas exigidas são **sempre calculadas em SQL/Python determinístico**
 1. **Casos diários** — últimos 30 dias.
 2. **Casos mensais** — últimos 12 meses.
 
-Renderizados em matplotlib na [[geracao-relatorio]], a partir da tool `dados_grafico`.
+Renderizados em Plotly na [[geracao-relatorio]], a partir da tool `dados_grafico`.

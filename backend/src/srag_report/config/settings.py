@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # ── NewsAPI ──
     newsapi_key: str = ""
 
+    # ── LangSmith (tracing opcional dos agentes) ──
+    langchain_api_key: str = ""
+    langchain_project: str = "srag-report"
+    langchain_endpoint: str = "https://api.smith.langchain.com"
+
     @property
     def database_url(self) -> str:
         return (

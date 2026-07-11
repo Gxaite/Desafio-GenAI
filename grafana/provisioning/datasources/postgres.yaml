@@ -2,8 +2,10 @@ apiVersion: 1
 
 datasources:
   - name: Postgres-SRAG
+    uid: postgres-srag
     type: postgres
     access: proxy
+    isDefault: true
     url: ${POSTGRES_HOST}:${POSTGRES_PORT}
     user: ${POSTGRES_USER}
     jsonData:

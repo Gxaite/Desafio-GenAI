@@ -8,7 +8,13 @@ from __future__ import annotations
 from datetime import date
 from typing import Protocol
 
-from srag_report.domain.models import AgregadoSRAG, Noticia, Periodo, PontoSerie
+from srag_report.domain.models import (
+    AgregadoSRAG,
+    EventoAuditoria,
+    Noticia,
+    Periodo,
+    PontoSerie,
+)
 
 
 class RepositorioDados(Protocol):
@@ -44,4 +50,14 @@ class ModeloLLM(Protocol):
 
     def completar(self, system: str, user: str) -> str:
         """Gera texto a partir de um prompt system+user. Levanta ErroModeloLLM em falha."""
+        ...
+
+
+class RepositorioAuditoria(Protocol):
+    """Persiste a trilha de auditoria de cada execução do agente (governança)."""
+
+    def registrar(
+        self, run_id: str, referencia: date | None, eventos: list[EventoAuditoria]
+    ) -> None:
+        """Grava a execução e seus eventos. Não deve derrubar o relatório se falhar."""
         ...

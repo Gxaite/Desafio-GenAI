@@ -11,7 +11,12 @@ from datetime import UTC, date, datetime
 from srag_report.application.orchestration import construir_grafo, executar
 from srag_report.application.orchestration.state import EstadoRelatorio
 from srag_report.domain.models import SeriesGraficos
-from srag_report.domain.ports import FonteNoticias, ModeloLLM, RepositorioDados
+from srag_report.domain.ports import (
+    FonteNoticias,
+    ModeloLLM,
+    RepositorioAuditoria,
+    RepositorioDados,
+)
 from srag_report.infrastructure.report.charts import graficos_data_uri
 from srag_report.infrastructure.report.pdf_renderer import renderar_pdf
 
@@ -22,9 +27,13 @@ def gerar_relatorio_pdf(
     llm: ModeloLLM,
     modelo: str,
     referencia: date | None = None,
+    auditoria: RepositorioAuditoria | None = None,
 ) -> tuple[bytes, EstadoRelatorio]:
     grafo = construir_grafo(repo, fonte, llm)
     estado = executar(grafo, referencia)
+
+    if auditoria is not None:  # persiste a trilha (governança) — nunca bloqueia o relatório
+        auditoria.registrar(estado["run_id"], estado["referencia"], estado["trilha"])
 
     series = estado["series"] or SeriesGraficos(diaria_30d=[], mensal_12m=[])
     grafico_diario, grafico_mensal = graficos_data_uri(series)

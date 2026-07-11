@@ -5,14 +5,41 @@
 
 from __future__ import annotations
 
+import os
+
+import structlog
+
 from srag_report.config.settings import settings
-from srag_report.domain.ports import FonteNoticias, ModeloLLM, RepositorioDados
+from srag_report.domain.ports import (
+    FonteNoticias,
+    ModeloLLM,
+    RepositorioAuditoria,
+    RepositorioDados,
+)
+from srag_report.infrastructure.audit.postgres_audit import PostgresRepositorioAuditoria
 from srag_report.infrastructure.data.postgres_repo import PostgresRepositorioDados
 from srag_report.infrastructure.llm.openrouter_client import OpenRouterModeloLLM
 from srag_report.infrastructure.news.newsapi_client import NewsApiFonteNoticias
 
+log = structlog.get_logger()
 
-def montar_dependencias() -> tuple[RepositorioDados, FonteNoticias, ModeloLLM]:
+
+def ativar_langsmith() -> bool:
+    """Liga o tracing LangSmith se houver chave. Idempotente. Retorna se ativou."""
+    if not settings.langchain_api_key:
+        return False
+    os.environ.setdefault("LANGCHAIN_TRACING_V2", "true")
+    os.environ.setdefault("LANGCHAIN_API_KEY", settings.langchain_api_key)
+    os.environ.setdefault("LANGCHAIN_PROJECT", settings.langchain_project)
+    os.environ.setdefault("LANGCHAIN_ENDPOINT", settings.langchain_endpoint)
+    log.info("langsmith.ativo", project=settings.langchain_project)
+    return True
+
+
+def montar_dependencias() -> tuple[
+    RepositorioDados, FonteNoticias, ModeloLLM, RepositorioAuditoria
+]:
+    ativar_langsmith()
     repo = PostgresRepositorioDados(settings.database_url)
     fonte = NewsApiFonteNoticias(settings.newsapi_key)
     llm = OpenRouterModeloLLM(
@@ -20,4 +47,5 @@ def montar_dependencias() -> tuple[RepositorioDados, FonteNoticias, ModeloLLM]:
         base_url=settings.openrouter_base_url,
         model=settings.openrouter_model_narrative,
     )
-    return repo, fonte, llm
+    auditoria = PostgresRepositorioAuditoria(settings.database_url)
+    return repo, fonte, llm, auditoria
