@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Caches de ferramentas
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Ambiente / segredos — NUNCA commitar
+.env
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# (dados volumosos são ignorados por data/.gitignore)

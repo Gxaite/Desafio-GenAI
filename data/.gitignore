@@ -1,0 +1,12 @@
+# Dados brutos volumosos — não versionar (proveniência em raw/srag/MANIFEST.md)
+raw/**/*.csv
+raw/**/*.parquet
+
+# Camadas geradas pelo ETL (reprodutíveis a partir de raw/)
+interim/*
+processed/*
+
+# Manter a estrutura de pastas vazia no git
+!**/.gitkeep
+
+# Referência (dicionário/ficha) permanece versionada por ser pequena e útil ao time.

@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: SRAG
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: true
+# Os dashboards JSON (casos diários/mensais + métricas) entram nesta pasta na Fase 6.

@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Instalar dependências
+        run: uv pip install --system ".[dev]"
+      - name: Lint (ruff)
+        run: ruff check .
+      - name: Tipos (mypy)
+        run: mypy src
+      - name: Testes (pytest)
+        run: pytest
