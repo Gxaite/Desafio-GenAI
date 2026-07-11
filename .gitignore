@@ -12,6 +12,10 @@ build/
 .ruff_cache/
 .pytest_cache/
 
+# cobertura / sonar (artefatos gerados)
+coverage.xml
+.scannerwork/
+
 # dbt (artefatos gerados)
 dados/dbt/target/
 dados/dbt/dbt_packages/

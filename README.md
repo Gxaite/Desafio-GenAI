@@ -141,6 +141,21 @@ uv run --extra dev ruff check . && uv run --extra dev mypy src
 uv run --extra dev lint-imports && uv run --extra dev bandit -r src -q
 ```
 
+### SonarQube (dashboard de qualidade, em Docker)
+
+Serviço opcional (profile `quality`) — dashboard com cobertura, bugs, vulnerabilidades,
+security hotspots, code smells e duplicação.
+
+```bash
+docker compose --profile quality up -d sonar-db sonarqube   # http://localhost:9000 (admin/admin)
+# no SonarQube: crie um token e exporte-o
+cd backend && uv run --extra dev pytest                     # gera coverage.xml
+SONAR_TOKEN=<seu-token> docker compose --profile quality run --rm sonar-scanner
+```
+
+Última análise: **cobertura 99,4% · 0 bugs · 0 vulnerabilidades · 0 hotspots · 0% duplicação**.
+Os adapters de I/O ficam fora da métrica de cobertura (testados por integração).
+
 ---
 
 ## Stack
