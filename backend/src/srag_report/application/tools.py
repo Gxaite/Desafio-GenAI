@@ -10,8 +10,9 @@ from datetime import date, timedelta
 
 from srag_report.domain import metrics
 from srag_report.domain.errors import ErroDados
-from srag_report.domain.models import Metrica, Periodo, SeriesGraficos
-from srag_report.domain.ports import RepositorioDados
+from srag_report.domain.models import Metrica, Noticia, Periodo, SeriesGraficos
+from srag_report.domain.news import filtrar_relevantes
+from srag_report.domain.ports import FonteNoticias, RepositorioDados
 
 _JANELA_DIAS = 30
 
@@ -57,3 +58,10 @@ def _inicio_12_meses(ref: date) -> date:
     total = ref.year * 12 + (ref.month - 1) - 11
     ano, mes = divmod(total, 12)
     return date(ano, mes + 1, 1)
+
+
+def buscar_noticias(
+    fonte: FonteNoticias, consulta: str = "SRAG", *, limite: int = 5
+) -> list[Noticia]:
+    """Notícias da fonte, já filtradas por relevância (guardrail) ao tema SRAG."""
+    return filtrar_relevantes(fonte.buscar(consulta, limite=limite))

@@ -15,8 +15,9 @@ dependencies = [
     "structlog>=24.1",
     "psycopg[binary]>=3.1",
     "tenacity>=8.4",
+    "httpx>=0.27",
 ]
-# NOTA: langgraph, langchain-openai, matplotlib e weasyprint entram nas Fases 4-6
+# NOTA: langgraph, langchain-openai, plotly, kaleido e weasyprint entram nas Fases 4-6
 # (mantém a imagem inicial enxuta e o boot rápido).
 
 [project.optional-dependencies]

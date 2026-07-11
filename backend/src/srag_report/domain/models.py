@@ -52,3 +52,13 @@ class SeriesGraficos(BaseModel):
 
     diaria_30d: list[PontoSerie]
     mensal_12m: list[PontoSerie]
+
+
+class Noticia(BaseModel):
+    """Uma notícia retornada pela fonte externa (após filtro de relevância)."""
+
+    titulo: str
+    fonte: str
+    url: str
+    publicado_em: date | None = None
+    descricao: str | None = None

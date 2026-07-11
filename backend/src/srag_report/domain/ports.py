@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Protocol
 
-from srag_report.domain.models import AgregadoSRAG, Periodo, PontoSerie
+from srag_report.domain.models import AgregadoSRAG, Noticia, Periodo, PontoSerie
 
 
 class RepositorioDados(Protocol):
@@ -28,4 +28,12 @@ class RepositorioDados(Protocol):
 
     def serie_mensal(self, periodo: Periodo) -> list[PontoSerie]:
         """Casos por mês no período."""
+        ...
+
+
+class FonteNoticias(Protocol):
+    """Fonte externa de notícias (ex.: NewsAPI)."""
+
+    def buscar(self, consulta: str, *, limite: int = 5) -> list[Noticia]:
+        """Notícias mais recentes para a consulta. Pode retornar [] (degradação)."""
         ...
