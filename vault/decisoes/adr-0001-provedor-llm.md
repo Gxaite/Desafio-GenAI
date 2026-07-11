@@ -24,9 +24,10 @@ Usar **modelos Claude (Anthropic) através do OpenRouter**. No LangChain, via
 
 ## Consequências
 - Troca de modelo é apenas config (uma string). Ver [[arquitetura]].
-- **Haiku 4.5** para orquestrar, **Sonnet 5** para narrar ([[agente-orquestrador]]).
+- **Haiku 4.5** para orquestrar **e narrar** ([[agente-orquestrador]]): é o Claude mais
+  barato e a narrativa curta e *grounded* dispensa Sonnet — custo mínimo.
 - Chave do OpenRouter fica no `.env` ([[qualidade-governanca]]).
-- Slugs exatos do OpenRouter a confirmar ao codar.
+- Slug confirmado: `anthropic/claude-haiku-4.5`.
 
 ## Relacionadas
-[[adr-0005-langgraph]] · [[arquitetura]] · [[arquitetura]]
+[[adr-0005-langgraph]] · [[arquitetura]] · [[agente-orquestrador]]

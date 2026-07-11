@@ -20,12 +20,13 @@ class Settings(BaseSettings):
 
     # ── App ──
     log_level: str = "INFO"
+    report_dir: str = "data/processed"
 
     # ── OpenRouter (LLM) ──
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     openrouter_model_orchestration: str = "anthropic/claude-haiku-4.5"
-    openrouter_model_narrative: str = "anthropic/claude-sonnet-5"
+    openrouter_model_narrative: str = "anthropic/claude-haiku-4.5"
 
     # ── NewsAPI ──
     newsapi_key: str = ""

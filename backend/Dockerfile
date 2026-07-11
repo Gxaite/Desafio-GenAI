@@ -4,6 +4,16 @@ FROM python:3.12-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
+# Libs de sistema: WeasyPrint (pango/cairo/gdk-pixbuf/ffi + fontes) e o chromium
+# headless empacotado pelo kaleido (export estático dos gráficos Plotly).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libcairo2 libffi8 \
+        shared-mime-info fonts-dejavu-core \
+        libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+        libxkbcommon0 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 \
+        libgbm1 libasound2 libatspi2.0-0 libxshmfence1 libx11-6 libxcb1 libxi6 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 WORKDIR /app
 

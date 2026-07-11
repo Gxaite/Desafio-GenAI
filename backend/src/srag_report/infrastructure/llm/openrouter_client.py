@@ -20,7 +20,7 @@ class OpenRouterModeloLLM:
         api_key: str,
         *,
         base_url: str = "https://openrouter.ai/api/v1",
-        model: str = "anthropic/claude-sonnet-5",
+        model: str = "anthropic/claude-haiku-4.5",
         timeout: float = 30.0,
         max_retries: int = 2,
     ) -> None:
