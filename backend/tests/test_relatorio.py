@@ -9,6 +9,7 @@ from srag_report.domain.models import (
     AgregadoSRAG,
     DadosRelatorio,
     EventoAuditoria,
+    Metrica,
     Noticia,
     Periodo,
     PontoSerie,
@@ -56,11 +57,16 @@ class _Render:
 class _Aud:
     def __init__(self) -> None:
         self.run_id: str | None = None
+        self.n_metricas = 0
+        self.n_noticias = 0
 
     def registrar(self, run_id: str, referencia: date | None,
-                  eventos: list[EventoAuditoria]) -> None:
+                  eventos: list[EventoAuditoria], metricas: list[Metrica],
+                  noticias: list[Noticia]) -> None:
         self.run_id = run_id
         self.n_eventos = len(eventos)
+        self.n_metricas = len(metricas)
+        self.n_noticias = len(noticias)
 
 
 def test_gera_pdf_monta_dados_e_audita() -> None:
@@ -74,6 +80,8 @@ def test_gera_pdf_monta_dados_e_audita() -> None:
     assert rend.recebido.narrativa == "Narrativa gerada."
     assert aud.run_id == estado["run_id"]
     assert aud.n_eventos == 4
+    assert aud.n_metricas == 4
+    assert aud.n_noticias == 1
 
 
 def test_gera_pdf_sem_auditoria() -> None:

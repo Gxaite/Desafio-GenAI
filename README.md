@@ -86,7 +86,7 @@ docker compose --profile etl run --rm dados        # roda o ETL (carrega bronze�
 ```
 
 - **API:** http://localhost:8000 · docs interativas em **/docs**
-- **Grafana:** http://localhost:3000 · login `admin` / `admin` · dashboard *"SRAG — Visão Geral"*
+- **Grafana:** http://localhost:3000 · usuário `admin`, senha em `GF_SECURITY_ADMIN_PASSWORD` (`.env`) · dashboard *"SRAG — Visão Geral"*
 
 ### Endpoints
 

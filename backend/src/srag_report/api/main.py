@@ -13,7 +13,7 @@ from srag_report.application.tools import calcular_metricas
 from srag_report.composition import montar_dependencias
 from srag_report.config.settings import settings
 from srag_report.domain.errors import SragReportError
-from srag_report.domain.models import Metrica
+from srag_report.domain.models import ExecucaoAgente, Metrica, ResumoExecucao
 
 app = FastAPI(title="SRAG Report API", version="0.1.0")
 
@@ -53,6 +53,29 @@ def agente_grafo() -> Response:
     repo, fonte, llm, _aud, _rend = montar_dependencias()
     mermaid = construir_grafo(repo, fonte, llm).get_graph().draw_mermaid()
     return Response(content=mermaid, media_type="text/plain; charset=utf-8")
+
+
+@app.get("/auditoria/execucoes")
+def listar_execucoes(limite: int = 20) -> list[ResumoExecucao]:
+    """Execuções recentes do agente (observabilidade)."""
+    _repo, _fonte, _llm, auditoria, _rend = montar_dependencias()
+    try:
+        return auditoria.listar_execucoes(limite)
+    except SragReportError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/auditoria/execucoes/{run_id}")
+def obter_execucao(run_id: str) -> ExecucaoAgente:
+    """Detalhe de uma execução: trilha (com durações), métricas e fontes usadas."""
+    _repo, _fonte, _llm, auditoria, _rend = montar_dependencias()
+    try:
+        execucao = auditoria.obter_execucao(run_id)
+    except SragReportError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if execucao is None:
+        raise HTTPException(status_code=404, detail="execução não encontrada")
+    return execucao
 
 
 @app.post("/relatorio")

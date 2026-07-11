@@ -71,6 +71,22 @@
       "fieldConfig": { "defaults": {}, "overrides": [] },
       "options": { "showHeader": true },
       "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT executado_em AS \"Execução\", referencia AS \"Referência\", run_id AS \"Run ID\" FROM auditoria.agente_run ORDER BY executado_em DESC LIMIT 20" } ]
+    },
+    {
+      "id": 9, "type": "table", "title": "Fontes consultadas (última execução)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "showHeader": true },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT fonte AS \"Fonte\", titulo AS \"Notícia\" FROM auditoria.agente_noticia WHERE run_id = (SELECT run_id FROM auditoria.agente_run ORDER BY executado_em DESC LIMIT 1)" } ]
+    },
+    {
+      "id": 10, "type": "barchart", "title": "Duração por etapa do agente (ms, última execução)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "datasource": { "type": "postgres", "uid": "postgres-srag" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "orange" }, "unit": "ms" }, "overrides": [] },
+      "options": { "xField": "etapa", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT no AS etapa, duracao_ms FROM auditoria.agente_evento WHERE run_id = (SELECT run_id FROM auditoria.agente_run ORDER BY executado_em DESC LIMIT 1) ORDER BY ordem" } ]
     }
   ]
 }

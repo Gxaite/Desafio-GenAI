@@ -33,7 +33,10 @@ def gerar_relatorio_pdf(
     estado = executar(grafo, referencia)
 
     if auditoria is not None:  # persiste a trilha (governança) — nunca bloqueia o relatório
-        auditoria.registrar(estado["run_id"], estado["referencia"], estado["trilha"])
+        auditoria.registrar(
+            estado["run_id"], estado["referencia"], estado["trilha"],
+            estado["metricas"] or [], estado["noticias"] or [],
+        )
 
     dados = DadosRelatorio(
         referencia=estado["referencia"],

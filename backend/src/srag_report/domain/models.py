@@ -71,6 +71,27 @@ class EventoAuditoria(BaseModel):
     tipo: str  # tool | llm | fallback | decisao
     detalhe: str
     ts: datetime
+    duracao_ms: int | None = None
+
+
+class ResumoExecucao(BaseModel):
+    """Resumo de uma execução do agente (para listagem/observabilidade)."""
+
+    run_id: str
+    referencia: date | None
+    executado_em: datetime
+    n_eventos: int
+
+
+class ExecucaoAgente(BaseModel):
+    """Visão completa de uma execução: trilha + métricas + fontes usadas."""
+
+    run_id: str
+    referencia: date | None
+    executado_em: datetime
+    eventos: list[EventoAuditoria]
+    metricas: list[Metrica]
+    noticias: list[Noticia]
 
 
 class DadosRelatorio(BaseModel):

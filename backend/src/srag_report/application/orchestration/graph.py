@@ -20,8 +20,12 @@ from srag_report.domain.models import EventoAuditoria
 from srag_report.domain.ports import FonteNoticias, ModeloLLM, RepositorioDados
 
 
-def _evento(no: str, tipo: str, detalhe: str) -> EventoAuditoria:
-    return EventoAuditoria(no=no, tipo=tipo, detalhe=detalhe, ts=datetime.now(UTC))
+def _evento(no: str, tipo: str, detalhe: str, inicio: datetime) -> EventoAuditoria:
+    agora = datetime.now(UTC)
+    return EventoAuditoria(
+        no=no, tipo=tipo, detalhe=detalhe, ts=agora,
+        duracao_ms=int((agora - inicio).total_seconds() * 1000),
+    )
 
 
 class _Nos:
@@ -33,37 +37,41 @@ class _Nos:
         self._llm = llm
 
     def metricas(self, estado: EstadoRelatorio) -> EstadoRelatorio:
+        t0 = datetime.now(UTC)
         ref = estado.get("referencia") or self._repo.data_mais_recente()
         ms = calcular_metricas(self._repo, ref)
         return {"referencia": ref, "metricas": ms,
-                "trilha": [_evento("metricas", "tool", f"{len(ms)} métricas calculadas")]}
+                "trilha": [_evento("metricas", "tool", f"{len(ms)} métricas calculadas", t0)]}
 
     def graficos(self, estado: EstadoRelatorio) -> EstadoRelatorio:
+        t0 = datetime.now(UTC)
         series = dados_grafico(self._repo, estado.get("referencia"))
         detalhe = f"{len(series.diaria_30d)} dias, {len(series.mensal_12m)} meses"
-        return {"series": series, "trilha": [_evento("graficos", "tool", detalhe)]}
+        return {"series": series, "trilha": [_evento("graficos", "tool", detalhe, t0)]}
 
     def noticias(self, estado: EstadoRelatorio) -> EstadoRelatorio:
+        t0 = datetime.now(UTC)
         try:
             ns = buscar_noticias(self._fonte)
             return {"noticias": ns,
-                    "trilha": [_evento("noticias", "tool", f"{len(ns)} relevantes")]}
+                    "trilha": [_evento("noticias", "tool", f"{len(ns)} relevantes", t0)]}
         except ErroFonteNoticias as exc:  # degrada: relatório sai sem notícias
             return {"noticias": [],
-                    "trilha": [_evento("noticias", "fallback", str(exc))]}
+                    "trilha": [_evento("noticias", "fallback", str(exc), t0)]}
 
     def narrativa(self, estado: EstadoRelatorio) -> EstadoRelatorio:
+        t0 = datetime.now(UTC)
         metricas = estado.get("metricas") or []
         noticias = estado.get("noticias") or []
         system, user = narr.montar_prompt(metricas, noticias, estado.get("referencia"))
         try:
             texto = narr.validar_narrativa(self._llm.completar(system, user))
             return {"narrativa": texto,
-                    "trilha": [_evento("narrativa", "llm", f"{len(texto)} caracteres")]}
+                    "trilha": [_evento("narrativa", "llm", f"{len(texto)} caracteres", t0)]}
         except (ErroModeloLLM, ErroGuardrail) as exc:  # degrada: narrativa determinística
             texto = narr.narrativa_fallback(metricas, estado.get("referencia"))
             return {"narrativa": texto,
-                    "trilha": [_evento("narrativa", "fallback", str(exc))]}
+                    "trilha": [_evento("narrativa", "fallback", str(exc), t0)]}
 
 
 def construir_grafo(repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM) -> Any:

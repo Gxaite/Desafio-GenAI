@@ -12,9 +12,12 @@ from srag_report.domain.models import (
     AgregadoSRAG,
     DadosRelatorio,
     EventoAuditoria,
+    ExecucaoAgente,
+    Metrica,
     Noticia,
     Periodo,
     PontoSerie,
+    ResumoExecucao,
 )
 
 
@@ -55,12 +58,25 @@ class ModeloLLM(Protocol):
 
 
 class RepositorioAuditoria(Protocol):
-    """Persiste a trilha de auditoria de cada execução do agente (governança)."""
+    """Persiste e lê a trilha de auditoria de cada execução do agente (governança)."""
 
     def registrar(
-        self, run_id: str, referencia: date | None, eventos: list[EventoAuditoria]
+        self,
+        run_id: str,
+        referencia: date | None,
+        eventos: list[EventoAuditoria],
+        metricas: list[Metrica],
+        noticias: list[Noticia],
     ) -> None:
-        """Grava a execução e seus eventos. Não deve derrubar o relatório se falhar."""
+        """Grava a execução (trilha + métricas + fontes). Não derruba o relatório se falhar."""
+        ...
+
+    def listar_execucoes(self, limite: int = 20) -> list[ResumoExecucao]:
+        """Execuções mais recentes (resumo)."""
+        ...
+
+    def obter_execucao(self, run_id: str) -> ExecucaoAgente | None:
+        """Detalhe completo de uma execução (trilha + métricas + fontes)."""
         ...
 
 
