@@ -20,4 +20,6 @@ build/
 .idea/
 .vscode/
 
+requisitos.md
+
 # (dados volumosos são ignorados por data/.gitignore)
