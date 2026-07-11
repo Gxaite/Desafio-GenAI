@@ -13,7 +13,7 @@ Monta o entregável final a partir do estado produzido pelo [[agente-orquestrado
 - **2 gráficos** (matplotlib → PNG): casos diários (30d) e mensais (12m).
 - **Narrativa** do LLM: contextualiza as métricas com as notícias ([[camada-tools]]).
 - Nota de premissas (proxies de UTI/vacinação — [[adr-0007-metricas-proxy]]).
-- Rodapé de transparência: modelo usado, fontes, timestamp ([[governanca-auditoria]]).
+- Rodapé de transparência: modelo usado, fontes, timestamp ([[qualidade-governanca]]).
 
 ## Pipeline
 
@@ -22,5 +22,5 @@ Monta o entregável final a partir do estado produzido pelo [[agente-orquestrado
 ## Entregáveis relacionados
 
 - Relatório em PDF (saída do agente).
-- **Diagrama conceitual** da arquitetura em PDF (deriva de [[visao-geral]]).
-- README do repositório, alimentado por este vault ([[criterios-avaliacao]]).
+- **Diagrama conceitual** da arquitetura em PDF (deriva de [[arquitetura]]).
+- README do repositório, alimentado por este vault.

@@ -24,8 +24,8 @@ Adotar *proxies* explícitos e **documentá-los no relatório**:
 
 ## Consequências
 - Premissas viram nota metodológica no relatório ([[geracao-relatorio]]) — rigor premiado
-  em [[criterios-avaliacao]].
+  em critérios de avaliação.
 - Deixa aberta a evolução futura (enriquecer com dados populacionais).
 
 ## Relacionadas
-[[metricas]] · [[geracao-relatorio]] · [[governanca-auditoria]]
+[[metricas]] · [[geracao-relatorio]] · [[qualidade-governanca]]

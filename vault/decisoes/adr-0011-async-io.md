@@ -20,11 +20,11 @@ coordena o async nas bordas.
 
 ## Alternativas consideradas
 - Tudo síncrono — simples, mas desperdiça paralelismo de I/O.
-- Async no domínio inteiro — contamina funções puras sem ganho ([[principios]]).
+- Async no domínio inteiro — contamina funções puras sem ganho ([[arquitetura]]).
 
 ## Consequências
 - Possível buscar notícias e preparar dados concorrentemente.
 - Fronteira async/sync fica explícita e testável.
 
 ## Relacionadas
-[[agente-orquestrador]] · [[resiliencia]] · [[estrutura-projeto]]
+[[agente-orquestrador]] · [[qualidade-governanca]] · [[arquitetura]]

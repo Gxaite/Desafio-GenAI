@@ -17,7 +17,7 @@ visualização agrega valor. Grafana também é a ferramenta citada no contexto 
 ## Decisão
 Usar **Grafana** como camada de dashboard/observabilidade, lendo o **Postgres**
 (datasource nativo). Dashboards e datasources **provisionados como código** (YAML/JSON
-versionados). Detalhes em [[visualizacao-bi]].
+versionados). Detalhes em [[arquitetura]].
 
 ## Alternativas consideradas
 - Metabase — bom, mas menos alinhado ao contexto e datasource de séries temporais menos forte.
@@ -26,8 +26,8 @@ versionados). Detalhes em [[visualizacao-bi]].
 
 ## Consequências
 - Séries temporais (casos diários/mensais) muito bem servidas.
-- Provisioning-as-code reforça reprodutibilidade ([[adr-0013-containerizacao]]) e governança ([[governanca-auditoria]]).
+- Provisioning-as-code reforça reprodutibilidade ([[adr-0013-containerizacao]]) e governança ([[qualidade-governanca]]).
 - **Bônus, não núcleo**: o entregável obrigatório continua sendo o relatório PDF ([[geracao-relatorio]]); Grafana é cortável se o tempo apertar.
 
 ## Relacionadas
-[[visualizacao-bi]] · [[adr-0006-duckdb]] · [[observabilidade]] · [[geracao-relatorio]]
+[[arquitetura]] · [[adr-0006-duckdb]] · [[qualidade-governanca]] · [[geracao-relatorio]]

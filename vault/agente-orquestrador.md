@@ -6,7 +6,7 @@ atualizado: 2026-07-09
 # Agente Orquestrador (LangGraph)
 
 O cérebro de execução. Implementado como um **grafo de estados** ([[adr-0005-langgraph]]),
-o que torna cada decisão um nó explícito e logável ([[governanca-auditoria]]).
+o que torna cada decisão um nó explícito e logável ([[qualidade-governanca]]).
 
 ## Estado (rascunho)
 
@@ -31,5 +31,5 @@ class EstadoRelatorio(TypedDict):
 ## Evolução para PoC completa
 
 - Arestas **condicionais**: se uma métrica vier vazia, decidir re-consultar ou sinalizar.
-- Validação entre nós (grounding) — [[guardrails]].
+- Validação entre nós (grounding) — [[qualidade-governanca]].
 - Seleção de modelo por nó ([[adr-0001-provedor-llm]]): Haiku p/ orquestrar, Sonnet p/ narrar.

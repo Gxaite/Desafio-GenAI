@@ -22,9 +22,9 @@ decisão logável. Ver [[agente-orquestrador]].
 - Orquestração 100% custom — reinventa a roda.
 
 ## Consequências
-- Cada transição do grafo é registrada na trilha ([[governanca-auditoria]]).
+- Cada transição do grafo é registrada na trilha ([[qualidade-governanca]]).
 - Habilita arestas condicionais para a fase PoC (re-consulta, validações).
 - Curva de aprendizado maior que um agente linear — aceitável pelo ganho em auditoria.
 
 ## Relacionadas
-[[agente-orquestrador]] · [[governanca-auditoria]] · [[adr-0001-provedor-llm]]
+[[agente-orquestrador]] · [[qualidade-governanca]] · [[adr-0001-provedor-llm]]

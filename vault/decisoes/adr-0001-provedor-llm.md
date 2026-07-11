@@ -23,10 +23,10 @@ Usar **modelos Claude (Anthropic) através do OpenRouter**. No LangChain, via
 - Gemini / Ollama local — descartados para esta PoC.
 
 ## Consequências
-- Troca de modelo é apenas config (uma string). Ver [[stack]].
+- Troca de modelo é apenas config (uma string). Ver [[arquitetura]].
 - **Haiku 4.5** para orquestrar, **Sonnet 5** para narrar ([[agente-orquestrador]]).
-- Chave do OpenRouter fica no `.env` ([[dados-sensiveis]]).
+- Chave do OpenRouter fica no `.env` ([[qualidade-governanca]]).
 - Slugs exatos do OpenRouter a confirmar ao codar.
 
 ## Relacionadas
-[[adr-0005-langgraph]] · [[stack]] · [[visao-geral]]
+[[adr-0005-langgraph]] · [[arquitetura]] · [[arquitetura]]

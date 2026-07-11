@@ -20,7 +20,7 @@ As 4 métricas exigidas são **sempre calculadas em SQL/Python determinístico**
 
 > ⚠️ Ocupação de UTI e vacinação são **proxies** — a base traz status por caso, não
 > leitos totais nem cobertura populacional. A premissa é documentada no relatório
-> (rigor premiado em [[criterios-avaliacao]]).
+> (rigor premiado em critérios de avaliação).
 
 ## Os 2 gráficos exigidos
 

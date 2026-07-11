@@ -20,9 +20,9 @@ Usar a **NewsAPI** como fonte, encapsulada na tool `buscar_noticias` ([[camada-t
 - Tavily — boa integração com agentes, mas optamos por NewsAPI.
 
 ## Consequências
-- Requer chave de API no `.env` ([[dados-sensiveis]]).
-- Resultados estruturados facilitam o filtro de relevância ([[guardrails]]).
+- Requer chave de API no `.env` ([[qualidade-governanca]]).
+- Resultados estruturados facilitam o filtro de relevância ([[qualidade-governanca]]).
 - Atenção a limites do tier gratuito.
 
 ## Relacionadas
-[[camada-tools]] · [[guardrails]]
+[[camada-tools]] · [[qualidade-governanca]]

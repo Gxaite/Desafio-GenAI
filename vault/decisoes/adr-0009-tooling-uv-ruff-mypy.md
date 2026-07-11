@@ -10,13 +10,13 @@ data: 2026-07-09
 - **Data:** 2026-07-09
 
 ## Contexto
-*Clean Code* é critério avaliado ([[criterios-avaliacao]]). Um projeto-referência precisa
+*Clean Code* é critério avaliado. Um projeto-referência precisa
 de portões de qualidade automatizados e reprodutíveis.
 
 ## Decisão
 Padronizar o stack moderno de qualidade: **uv** (pacotes/venv), **ruff** (lint+format),
 **mypy --strict** (tipos), **pytest** (testes), **import-linter** (fronteiras),
-**pre-commit** e **GitHub Actions** (CI). Detalhes em [[qualidade-tooling]].
+**pre-commit** e **GitHub Actions** (CI). Detalhes em [[qualidade-governanca]].
 
 ## Alternativas consideradas
 - poetry + black + isort + flake8 — mais peças; ruff/uv consolidam e são mais rápidos.
@@ -27,4 +27,4 @@ Padronizar o stack moderno de qualidade: **uv** (pacotes/venv), **ruff** (lint+f
 - Qualidade verificada a cada commit/push.
 
 ## Relacionadas
-[[qualidade-tooling]] · [[stack]] · [[principios]]
+[[qualidade-governanca]] · [[arquitetura]] · [[arquitetura]]

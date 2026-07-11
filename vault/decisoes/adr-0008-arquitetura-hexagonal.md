@@ -16,7 +16,7 @@ Precisamos isolar as regras de negócio dos frameworks (LangGraph, Postgres, New
 ## Decisão
 Adotar **Arquitetura Hexagonal**: um núcleo de **domínio puro** que define **ports**
 (Protocols), com frameworks/serviços entrando como **adapters** de infraestrutura.
-Camadas: domain → application → infrastructure/interface. Ver [[principios]] e [[estrutura-projeto]].
+Camadas: domain → application → infrastructure/interface. Ver [[arquitetura]] e [[arquitetura]].
 
 ## Alternativas consideradas
 - Arquitetura em camadas simples/MVC — menos isolamento, acopla domínio a I/O.
@@ -24,8 +24,8 @@ Camadas: domain → application → infrastructure/interface. Ver [[principios]]
 
 ## Consequências
 - Domínio testável sem mocks; adapters trocáveis (ex.: trocar NewsAPI ou LLM).
-- Regras de dependência impostas no CI via `import-linter` ([[qualidade-tooling]]).
+- Regras de dependência impostas no CI via `import-linter` ([[qualidade-governanca]]).
 - Custo: mais arquivos e cerimônia — justificado pelo objetivo.
 
 ## Relacionadas
-[[principios]] · [[estrutura-projeto]] · [[adr-0005-langgraph]] · [[adr-0004-llm-orquestra-python-calcula]]
+[[arquitetura]] · [[arquitetura]] · [[adr-0005-langgraph]] · [[adr-0004-llm-orquestra-python-calcula]]

@@ -16,16 +16,16 @@ Precisamos correlacionar logs, traces e a trilha de auditoria de cada execução
 ## Decisão
 Adotar **structlog** (logs JSON), **OpenTelemetry** (spans por nó/adapter) e uma
 **trilha de auditoria** persistida por execução, todos correlacionados por um `run_id`.
-Detalhes em [[observabilidade]].
+Detalhes em [[qualidade-governanca]].
 
 ## Alternativas consideradas
 - `print`/logging básico — insuficiente para auditoria estruturada.
 - Só LangSmith — útil, mas cria dependência externa; a trilha própria é soberana.
 
 ## Consequências
-- Cada execução é totalmente rastreável ([[governanca-auditoria]]).
-- Overhead de instrumentação, isolado da lógica de domínio ([[principios]]).
-- Dados sensíveis nunca são logados ([[dados-sensiveis]]).
+- Cada execução é totalmente rastreável ([[qualidade-governanca]]).
+- Overhead de instrumentação, isolado da lógica de domínio ([[arquitetura]]).
+- Dados sensíveis nunca são logados ([[qualidade-governanca]]).
 
 ## Relacionadas
-[[observabilidade]] · [[governanca-auditoria]] · [[guardrails]]
+[[qualidade-governanca]] · [[qualidade-governanca]] · [[qualidade-governanca]]

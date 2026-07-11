@@ -23,9 +23,9 @@ retornados.
   correção e auditabilidade.
 
 ## Consequências
-- Métricas viram funções puras testáveis ([[camada-tools]], [[stack]]).
-- Base para o guardrail de *grounding* ([[guardrails]]).
-- Facilita a trilha de auditoria ([[governanca-auditoria]]).
+- Métricas viram funções puras testáveis ([[camada-tools]], [[arquitetura]]).
+- Base para o guardrail de *grounding* ([[qualidade-governanca]]).
+- Facilita a trilha de auditoria ([[qualidade-governanca]]).
 
 ## Relacionadas
-[[camada-tools]] · [[guardrails]] · [[metricas]]
+[[camada-tools]] · [[qualidade-governanca]] · [[metricas]]

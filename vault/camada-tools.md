@@ -6,7 +6,7 @@ atualizado: 2026-07-09
 # Camada de Tools
 
 Interface entre o [[agente-orquestrador]] e o mundo determinístico. Cada tool tem
-**schema tipado (pydantic)** — entrada e saída validadas ([[guardrails]]).
+**schema tipado (pydantic)** — entrada e saída validadas ([[qualidade-governanca]]).
 
 ## Tools
 
@@ -20,10 +20,10 @@ Devolve as séries temporais dos 2 gráficos (30 dias / 12 meses). Renderizaçã
 
 ### `buscar_noticias`
 Consulta a **NewsAPI** ([[adr-0002-fonte-noticias]]) por notícias de SRAG em tempo real.
-Aplica filtro de relevância antes de devolver ([[guardrails]]).
+Aplica filtro de relevância antes de devolver ([[qualidade-governanca]]).
 
 ## Princípios
 
 - Tools **não alucinam**: retornam dados de fonte, ou erro explícito.
-- Toda chamada é registrada com entrada/saída ([[governanca-auditoria]]).
-- Funções de métrica são **puras e testáveis** (pytest — ver [[stack]]).
+- Toda chamada é registrada com entrada/saída ([[qualidade-governanca]]).
+- Funções de métrica são **puras e testáveis** (pytest — ver [[arquitetura]]).

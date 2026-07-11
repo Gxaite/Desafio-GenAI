@@ -8,7 +8,7 @@ notícias em tempo real para gerar um **relatório automatizado** com métricas 
 
 ## Arquitetura (resumo)
 
-Ver [`vault/arquitetura/visao-geral.md`](vault/arquitetura/visao-geral.md). Núcleo
+Ver [`vault/arquitetura.md`](vault/arquitetura.md). Núcleo
 hexagonal ([Ports & Adapters](vault/decisoes/adr-0008-arquitetura-hexagonal.md)); tudo
 roda em **Docker**.
 
@@ -34,4 +34,4 @@ just etl                   # roda o ETL quando os dados estiverem em data/raw/sr
 - Dados brutos: `data/` (ver [`data/README.md`](data/README.md)).
 
 ## Status
-Em construção — ver o backlog de fases em `vault/planejamento/fases.md`.
+Em construção — ver o backlog de fases em [`vault/roadmap.md`](vault/roadmap.md).

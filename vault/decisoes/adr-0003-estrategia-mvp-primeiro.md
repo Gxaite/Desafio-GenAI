@@ -15,7 +15,7 @@ Risco de gastar tempo em refinamento antes de ter algo funcional.
 
 ## Decisão
 Construir primeiro um **MVP ponta-a-ponta** (grafo linear, guardrails mínimos) e só
-então endurecer até a PoC completa. Ver [[fases]].
+então endurecer até a PoC completa. Ver [[roadmap]].
 
 ## Alternativas consideradas
 - Ir direto para a PoC completa — maior risco de não fechar o ciclo a tempo.
@@ -25,4 +25,4 @@ então endurecer até a PoC completa. Ver [[fases]].
 - Governança/guardrails robustos entram na fase de endurecimento, não no MVP.
 
 ## Relacionadas
-[[fases]] · [[visao-geral]]
+[[roadmap]] · [[arquitetura]]
