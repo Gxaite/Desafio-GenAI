@@ -5,10 +5,10 @@ data: 2026-07-09
 revisa: versão anterior elegia DuckDB como store
 ---
 
-# ADR-0006 — Store analítico: Postgres (DuckDB como motor de transformação)
+# ADR-0006 — Store analítico: Postgres
 
 - **Status:** aceito (**revisa** a decisão anterior, que elegia DuckDB como store)
-- **Data:** 2026-07-09
+- **Data:** 2026-07-09 (atualizado em 2026-07-11)
 
 ## Contexto
 A versão original elegeu DuckDB (embarcado) como store. Com a virada para **arquitetura
@@ -19,8 +19,8 @@ BI imaturos.
 
 ## Decisão
 - **Postgres** como **store analítico servido** — lido por `backend` e `grafana`.
-- **DuckDB + pandas** permanecem como **motor de transformação em memória** dentro do
-  ETL (`dados`): limpam o CSV pesado (194 colunas) e **carregam os marts no Postgres**.
+- O **motor de transformação** deixou de ser DuckDB/pandas: a transformação passou a ser
+  **EL (Python) + dbt** numa arquitetura medallion — ver [[adr-0015-dbt-medallion]].
 
 ## Alternativas consideradas
 - DuckDB compartilhado por volume — frágil em multi-container (locks, single-writer).
@@ -30,8 +30,7 @@ BI imaturos.
 ## Consequências
 - +1 container (`postgres`), porém **datasource nativo** para o Grafana e acesso
   concorrente seguro.
-- Modelagem **relacional** dos marts (fato + dimensões/agregados).
-- DuckDB segue útil pela velocidade de transformação sobre CSV.
+- Modelagem **relacional** dos marts (camada gold agregada).
 
 ## Relacionadas
-[[camada-dados]] · [[adr-0013-containerizacao]] · [[adr-0014-grafana]] · [[visualizacao-bi]] · [[stack]]
+[[camada-dados]] · [[adr-0015-dbt-medallion]] · [[adr-0013-containerizacao]] · [[adr-0014-grafana]] · [[arquitetura]]

@@ -1,27 +1,50 @@
-"""Ponto de entrada do ETL.
+"""Ponto de entrada do ETL de SRAG (job `dados`).
 
-Placeholder da Fase 1 — a lógica real (extract/clean/dedupe/load) entra na Fase 2.
-Ver vault/arquitetura/camada-dados.md.
+Pipeline: EL (Python → bronze) → dbt build (bronze → silver → gold + testes).
+Ver vault/camada-dados.md. Só agregados (gold) são servidos ao backend e ao Grafana.
 """
 
 from __future__ import annotations
 
+import subprocess
+import sys
+
 import structlog
+
+from srag_etl.config import settings
+from srag_etl.extract_load import carregar_bronze, registrar_execucao
 
 log = structlog.get_logger()
 
 
+def _run_dbt(*args: str) -> None:
+    cmd = ["dbt", *args, "--project-dir", settings.dbt_project_dir,
+           "--profiles-dir", settings.dbt_project_dir]
+    log.info("dbt.run", cmd=" ".join(cmd))
+    proc = subprocess.run(cmd, text=True, capture_output=True)
+    for linha in (proc.stdout or "").splitlines():
+        log.info("dbt", out=linha)
+    if proc.returncode != 0:
+        for linha in (proc.stderr or "").splitlines():
+            log.error("dbt", err=linha)
+        raise SystemExit(f"dbt {' '.join(args)} falhou (rc={proc.returncode})")
+
+
 def main() -> None:
-    log.info("etl.start", fase="scaffold")
-    # TODO Fase 2:
-    #   1. extract  — ler data/raw/srag/*.csv (delimitador ';', encoding latin-1)
-    #   2. clean    — datas ISO, normalizar EVOLUCAO/UTI/VACINA_COV, ausentes
-    #   3. dedupe   — unir 2025+2026 sem duplicar casos de virada de ano
-    #   4. anonimizar — remover identificadores (só agregados cruzam a fronteira)
-    #   5. aggregate — marts por dia / mês / recorte
-    #   6. load     — gravar marts no Postgres
-    log.info("etl.done", msg="scaffold ok — sem carga ainda")
+    raw_dir = settings.srag_raw_dir
+    log.info("etl.start", raw_dir=raw_dir, destino=settings.postgres_db)
+
+    resultado = carregar_bronze(settings.database_url, raw_dir)
+    registrar_execucao(settings.database_url, resultado)
+    log.info("el.done", linhas_lidas=resultado.linhas_lidas, arquivos=resultado.arquivos)
+
+    _run_dbt("build")  # roda models (silver, gold) + testes
+    log.info("etl.done")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (FileNotFoundError, ValueError, SystemExit) as exc:
+        log.error("etl.fail", erro=str(exc))
+        sys.exit(1)

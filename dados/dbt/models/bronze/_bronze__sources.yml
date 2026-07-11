@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    description: >
+      Landing bruto carregado pelo passo EL (Python). Apenas as ~6 colunas necessárias às
+      métricas (minimização LGPD). Uma linha por registro de origem, sem limpeza.
+    tables:
+      - name: srag_raw
+        description: Registros de SRAG (SIVEP-Gripe) 2025+2026, como texto.
+        columns:
+          - name: nu_notific
+            description: Número da notificação (identificador do registro na origem).
+          - name: dt_sin_pri
+            description: Data dos primeiros sintomas (ISO 8601, texto).
+          - name: arquivo_origem
+            description: Nome do CSV de origem (proveniência/lineage).
+            tests:
+              - not_null

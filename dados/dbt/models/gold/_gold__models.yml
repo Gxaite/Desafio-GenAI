@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: gold_mart_srag_diario
+    description: >
+      Mart agregado de SRAG por dia (data do 1º sintoma) e UF. Fonte das 4 métricas e dos
+      2 gráficos do relatório. Só contagens — servido ao backend e ao Grafana.
+    columns:
+      - name: dt
+        description: Data do primeiro sintoma.
+        tests:
+          - not_null
+      - name: uf
+        description: UF de residência.
+        tests:
+          - not_null
+      - name: casos
+        description: Total de casos no dia/UF.
+        tests:
+          - not_null

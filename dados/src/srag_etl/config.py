@@ -1,0 +1,32 @@
+"""Configuração 12-factor do ETL — lê o ambiente (.env / compose). Sem segredos no código."""
+
+from __future__ import annotations
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # ── Postgres (destino dos marts) ──
+    postgres_host: str = "postgres"
+    postgres_port: int = 5432
+    postgres_user: str = "srag"
+    postgres_password: str = "srag"
+    postgres_db: str = "srag"
+
+    # ── Fonte (CSVs brutos; montados read-only no container) ──
+    srag_raw_dir: str = "/data/raw/srag"
+
+    # ── dbt (transformação bronze → silver → gold) ──
+    dbt_project_dir: str = "/app/dbt"
+
+    @property
+    def database_url(self) -> str:
+        return (
+            f"postgresql://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
+
+
+settings = Settings()

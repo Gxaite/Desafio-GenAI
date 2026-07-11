@@ -12,6 +12,12 @@ build/
 .ruff_cache/
 .pytest_cache/
 
+# dbt (artefatos gerados)
+dados/dbt/target/
+dados/dbt/dbt_packages/
+dados/dbt/logs/
+**/dbt.log
+
 # Ambiente / segredos — NUNCA commitar
 .env
 
@@ -23,3 +29,4 @@ build/
 requisitos.md
 
 # (dados volumosos são ignorados por data/.gitignore)
+dados/dbt/.user.yml

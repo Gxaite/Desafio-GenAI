@@ -11,6 +11,9 @@ COPY pyproject.toml ./
 COPY src ./src
 RUN uv pip install --system --no-cache .
 
+# Projeto dbt (transformação bronze → silver → gold)
+COPY dbt ./dbt
+
 RUN useradd -m app && chown -R app /app
 USER app
 
