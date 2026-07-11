@@ -14,9 +14,9 @@ from langgraph.graph import END, START, StateGraph
 
 from srag_report.application import narrativa as narr
 from srag_report.application.orchestration.state import EstadoRelatorio
-from srag_report.domain.models import EventoAuditoria
 from srag_report.application.tools import buscar_noticias, calcular_metricas, dados_grafico
 from srag_report.domain.errors import ErroFonteNoticias, ErroGuardrail, ErroModeloLLM
+from srag_report.domain.models import EventoAuditoria
 from srag_report.domain.ports import FonteNoticias, ModeloLLM, RepositorioDados
 
 

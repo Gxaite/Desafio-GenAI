@@ -28,13 +28,14 @@ class PostgresRepositorioDados:
         self._dsn = database_url
 
     def data_mais_recente(self) -> date | None:
-        row = self._um(f"SELECT max(dt) FROM {_MART}")
+        # Nome da tabela é constante interna; valores são sempre parametrizados (%s).
+        row = self._um(f"SELECT max(dt) FROM {_MART}")  # nosec B608
         return row[0] if row else None
 
     def agregado(self, periodo: Periodo) -> AgregadoSRAG:
         somas = ", ".join(f"coalesce(sum({c}), 0)" for c in _COLUNAS_AGREGADO)
         row = self._um(
-            f"SELECT {somas} FROM {_MART} WHERE dt BETWEEN %s AND %s",
+            f"SELECT {somas} FROM {_MART} WHERE dt BETWEEN %s AND %s",  # nosec B608
             (periodo.inicio, periodo.fim),
         )
         valores = row if row else (0,) * len(_COLUNAS_AGREGADO)
@@ -42,14 +43,14 @@ class PostgresRepositorioDados:
 
     def serie_diaria(self, periodo: Periodo) -> list[PontoSerie]:
         return self._serie(
-            f"SELECT dt, sum(casos) FROM {_MART} WHERE dt BETWEEN %s AND %s "
+            f"SELECT dt, sum(casos) FROM {_MART} WHERE dt BETWEEN %s AND %s "  # nosec B608
             "GROUP BY dt ORDER BY dt",
             periodo,
         )
 
     def serie_mensal(self, periodo: Periodo) -> list[PontoSerie]:
         return self._serie(
-            f"SELECT date_trunc('month', dt)::date, sum(casos) FROM {_MART} "
+            f"SELECT date_trunc('month', dt)::date, sum(casos) FROM {_MART} "  # nosec B608
             "WHERE dt BETWEEN %s AND %s GROUP BY 1 ORDER BY 1",
             periodo,
         )

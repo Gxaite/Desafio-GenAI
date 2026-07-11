@@ -30,3 +30,5 @@ requisitos.md
 
 # (dados volumosos são ignorados por data/.gitignore)
 dados/dbt/.user.yml
+.coverage
+htmlcov/

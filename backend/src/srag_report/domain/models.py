@@ -71,3 +71,16 @@ class EventoAuditoria(BaseModel):
     tipo: str  # tool | llm | fallback | decisao
     detalhe: str
     ts: datetime
+
+
+class DadosRelatorio(BaseModel):
+    """Tudo que o relatório precisa — o renderizador (adapter) transforma isto em PDF."""
+
+    referencia: date | None
+    metricas: list[Metrica]
+    series: SeriesGraficos
+    noticias: list[Noticia]
+    narrativa: str
+    run_id: str
+    modelo: str
+    gerado_em: str

@@ -10,6 +10,7 @@ from typing import Protocol
 
 from srag_report.domain.models import (
     AgregadoSRAG,
+    DadosRelatorio,
     EventoAuditoria,
     Noticia,
     Periodo,
@@ -60,4 +61,11 @@ class RepositorioAuditoria(Protocol):
         self, run_id: str, referencia: date | None, eventos: list[EventoAuditoria]
     ) -> None:
         """Grava a execução e seus eventos. Não deve derrubar o relatório se falhar."""
+        ...
+
+
+class RenderizadorRelatorio(Protocol):
+    """Transforma os dados do relatório no artefato final (ex.: PDF)."""
+
+    def renderizar(self, dados: DadosRelatorio) -> bytes:
         ...

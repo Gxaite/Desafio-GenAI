@@ -19,5 +19,9 @@ jobs:
         run: ruff check .
       - name: Tipos (mypy)
         run: mypy src
-      - name: Testes (pytest)
+      - name: Fronteiras da arquitetura (import-linter)
+        run: lint-imports
+      - name: Segurança (bandit)
+        run: bandit -r src -q
+      - name: Testes + cobertura (pytest, meta 85%)
         run: pytest

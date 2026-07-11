@@ -13,6 +13,7 @@ from srag_report.config.settings import settings
 from srag_report.domain.ports import (
     FonteNoticias,
     ModeloLLM,
+    RenderizadorRelatorio,
     RepositorioAuditoria,
     RepositorioDados,
 )
@@ -20,6 +21,7 @@ from srag_report.infrastructure.audit.postgres_audit import PostgresRepositorioA
 from srag_report.infrastructure.data.postgres_repo import PostgresRepositorioDados
 from srag_report.infrastructure.llm.openrouter_client import OpenRouterModeloLLM
 from srag_report.infrastructure.news.newsapi_client import NewsApiFonteNoticias
+from srag_report.infrastructure.report.renderer import RelatorioPdfRenderer
 
 log = structlog.get_logger()
 
@@ -37,7 +39,7 @@ def ativar_langsmith() -> bool:
 
 
 def montar_dependencias() -> tuple[
-    RepositorioDados, FonteNoticias, ModeloLLM, RepositorioAuditoria
+    RepositorioDados, FonteNoticias, ModeloLLM, RepositorioAuditoria, RenderizadorRelatorio
 ]:
     ativar_langsmith()
     repo = PostgresRepositorioDados(settings.database_url)
@@ -48,4 +50,5 @@ def montar_dependencias() -> tuple[
         model=settings.openrouter_model_narrative,
     )
     auditoria = PostgresRepositorioAuditoria(settings.database_url)
-    return repo, fonte, llm, auditoria
+    renderizador = RelatorioPdfRenderer()
+    return repo, fonte, llm, auditoria, renderizador

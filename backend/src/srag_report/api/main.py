@@ -40,7 +40,7 @@ def health_db() -> dict[str, str]:
 @app.get("/metricas")
 def metricas() -> list[Metrica]:
     """As 4 métricas dos últimos 30 dias (JSON)."""
-    repo, _fonte, _llm, _aud = montar_dependencias()
+    repo, _fonte, _llm, _aud, _rend = montar_dependencias()
     try:
         return calcular_metricas(repo)
     except SragReportError as exc:
@@ -50,7 +50,7 @@ def metricas() -> list[Metrica]:
 @app.get("/agente/grafo", response_class=Response)
 def agente_grafo() -> Response:
     """Diagrama do grafo do agente (Mermaid) — visualização do fluxo de orquestração."""
-    repo, fonte, llm, _aud = montar_dependencias()
+    repo, fonte, llm, _aud, _rend = montar_dependencias()
     mermaid = construir_grafo(repo, fonte, llm).get_graph().draw_mermaid()
     return Response(content=mermaid, media_type="text/plain; charset=utf-8")
 
@@ -58,10 +58,11 @@ def agente_grafo() -> Response:
 @app.post("/relatorio")
 def relatorio() -> Response:
     """Gera o relatório completo (métricas + gráficos + narrativa) em PDF."""
-    repo, fonte, llm, auditoria = montar_dependencias()
+    repo, fonte, llm, auditoria, renderizador = montar_dependencias()
     try:
         pdf, estado = gerar_relatorio_pdf(
-            repo, fonte, llm, settings.openrouter_model_narrative, auditoria=auditoria
+            repo, fonte, llm, settings.openrouter_model_narrative, renderizador,
+            auditoria=auditoria,
         )
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
