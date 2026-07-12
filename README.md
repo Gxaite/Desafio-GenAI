@@ -1,4 +1,4 @@
-# Desafio GenAI — Relatório Automatizado de SRAG
+# Desafio GenAI · Relatório Automatizado de SRAG
 
 ![coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
 ![tests](https://img.shields.io/badge/pytest-29%20passing-brightgreen)
@@ -6,24 +6,70 @@
 ![SonarQube](https://img.shields.io/badge/SonarQube-0%20bugs%20%C2%B7%200%20vulns-brightgreen)
 ![arch](https://img.shields.io/badge/arquitetura-hexagonal%20%2B%20medallion-blue)
 
-PoC de um **agente de IA generativa** (LangGraph) que consulta **dados reais de SRAG**
-(Open DATASUS / SIVEP-Gripe) e **notícias em tempo real** para gerar um **relatório
-automatizado** em PDF, com as métricas exigidas, dois gráficos e uma narrativa de contexto
-— tudo rodando em **Docker**.
+Agente de IA generativa (LangGraph) que consulta dados reais de SRAG (Open DATASUS / SIVEP-Gripe)
+e notícias em tempo real para gerar um relatório automatizado em PDF, com as métricas exigidas,
+dois gráficos e uma narrativa de contexto. Toda a solução roda em Docker.
 
-> Contexto: PoC para a Indicium HealthCare Inc. avaliar uma solução que ajude profissionais
-> de saúde a entender a severidade e o avanço de surtos de SRAG.
+Contexto: PoC para a Indicium HealthCare Inc. avaliar uma solução que ajude profissionais de
+saúde a entender a severidade e o avanço de surtos de SRAG.
 
----
+## Sumário
+
+1. [Como rodar](#como-rodar)
+2. [Interfaces](#interfaces)
+3. [Arquitetura](#arquitetura)
+4. [Métricas e gráficos](#métricas-e-gráficos)
+5. [Governança, guardrails e dados sensíveis](#governança-guardrails-e-dados-sensíveis)
+6. [Qualidade](#qualidade)
+7. [Stack e documentação](#stack-e-documentação)
+
+## Como rodar
+
+Pré-requisitos: **Docker** (com integração WSL2 ativa, se aplicável) e as chaves de API do
+**OpenRouter** (LLM) e do **NewsAPI** (notícias).
+
+```bash
+# 1. Configuração (o .env é gitignored; nenhuma chave vai para o repositório)
+cp .env.example .env
+#    preencha OPENROUTER_API_KEY e NEWSAPI_KEY no .env
+
+# 2. Suba a stack (Postgres, backend/agente, Grafana)
+docker compose up -d postgres backend grafana
+
+# 3. Rode o ETL (bronze -> silver -> gold + testes de dados)
+docker compose --profile etl run --rm dados
+```
+
+No passo 3, se não houver CSV em `data/raw/srag/`, o ETL **baixa os dados automaticamente** do
+Open DATASUS (S3 público, snapshot versionado). Ou seja, o projeto roda a partir de um clone
+limpo, sem precisar do arquivo de 554 MB no repositório.
+
+Em seguida, abra o **hub** em **http://localhost:8000/**.
+
+## Interfaces
+
+| Interface | URL | Descrição |
+|---|---|---|
+| Hub | http://localhost:8000/ | Ponto de entrada: métricas ao vivo, geração de relatório em tempo real, trilha da última execução |
+| API (Swagger) | http://localhost:8000/docs | Documentação interativa dos endpoints |
+| Grafana | http://localhost:3000 | Dashboard interativo (usuário `admin`, senha em `GF_SECURITY_ADMIN_PASSWORD`) |
+
+Endpoints principais:
+
+| Endpoint | Função |
+|---|---|
+| `POST /relatorio` | Gera o relatório PDF completo (bloqueante) |
+| `GET /relatorio/stream` | Gera o relatório emitindo o progresso do agente nó a nó (SSE) |
+| `GET /metricas` | As quatro métricas em JSON |
+| `GET /agente/grafo` | Página do fluxo do agente (fonte Mermaid em `?format=mermaid`) |
+| `GET /auditoria/execucoes` e `/{run_id}` | Execuções do agente e a trilha detalhada (tempos, fontes) |
+| `GET /health`, `/health/db` | Liveness e readiness |
 
 ## Arquitetura
 
-**Princípio-guia:** *o LLM orquestra e explica; o Python calcula* — todas as métricas são
-SQL/Python determinístico; o LLM só narra sobre números já calculados (sem alucinar).
-Núcleo **hexagonal** (Ports & Adapters), dados em **arquitetura medallion** (bronze → silver
-→ gold), tudo containerizado.
-
-### Diagrama conceitual
+Princípio-guia: o LLM orquestra e explica, o Python calcula. Todas as métricas são SQL/Python
+determinístico; o LLM apenas narra sobre números já apurados, sem alucinar. O núcleo do backend
+segue **hexagonal (Ports & Adapters)** e os dados seguem **medallion** (bronze, silver, gold).
 
 ```mermaid
 flowchart TD
@@ -32,151 +78,104 @@ flowchart TD
         NEWS[["NewsAPI<br/>tempo real"]]
         LLM[["Claude via OpenRouter"]]
     end
-
-    subgraph dados["Serviço dados — ETL medallion (dbt)"]
+    subgraph dados["Servico dados · ETL medallion (dbt)"]
         BRONZE[("bronze<br/>landing bruto")]
         SILVER[("silver<br/>limpo + dedup")]
-        GOLD[("gold<br/>mart agregado")]
+        GOLD[("gold<br/>star schema")]
         CSV --> BRONZE --> SILVER --> GOLD
     end
-
-    subgraph backend["Serviço backend — Agente Orquestrador (LangGraph)"]
+    subgraph backend["Servico backend · Agente Orquestrador (LangGraph)"]
         direction LR
         T1["tool<br/>calcular_metricas"]
         T2["tool<br/>dados_grafico"]
         T3["tool<br/>buscar_noticias"]
-        NARR["nó narrativa<br/>(LLM)"]
-        REL["montar relatório<br/>Plotly + WeasyPrint"]
+        NARR["no narrativa<br/>(LLM)"]
+        REL["montar relatorio<br/>Plotly + WeasyPrint"]
         T1 --> T2 --> T3 --> NARR --> REL
     end
-
     GOLD --> T1
     GOLD --> T2
     NEWS --> T3
     LLM --> NARR
-    REL --> PDF[["Relatório PDF<br/>4 métricas + 2 gráficos + narrativa"]]
-    GOLD --> GRAFANA[["Grafana<br/>dashboard"]]
-
+    REL --> PDF[["Relatorio PDF"]]
+    GOLD --> GRAFANA[["Grafana"]]
     AUDIT[("Auditoria<br/>trilha por run_id")]
     backend -.registra.-> AUDIT
 ```
 
-> Versão em **PDF** (entregável): [`docs/diagrama-conceitual.pdf`](docs/diagrama-conceitual.pdf)
-> — reproduzível via `uv run --with weasyprint python docs/gerar_diagrama.py`.
+Versão em PDF (entregável): [`docs/diagrama-conceitual.pdf`](docs/diagrama-conceitual.pdf),
+reproduzível com `uv run --with weasyprint python docs/gerar_diagrama.py`.
 
-- **Camadas de código** (`backend`): `domain/` (puro, sem I/O) → `application/` (casos de uso
-  + orquestração LangGraph + guardrails) → `infrastructure/` (adapters: Postgres, NewsAPI,
-  OpenRouter, relatório) + `observability/`, `api/`, `cli.py` (composition root).
-- As fronteiras do hexágono são **impostas no CI** via `import-linter`.
-- Detalhes: [`vault/arquitetura.md`](vault/arquitetura.md) · decisões em
-  [`vault/decisoes/`](vault/decisoes) (ADRs 0001–0015).
+Camadas de código do `backend`: `domain/` (puro, sem I/O), `application/` (casos de uso,
+orquestração LangGraph e guardrails), `infrastructure/` (adapters de Postgres, NewsAPI,
+OpenRouter e relatório), além de `api/` e `composition.py` (composition root). As fronteiras do
+hexágono são impostas no CI pelo `import-linter`. Detalhes em
+[`vault/arquitetura.md`](vault/arquitetura.md) e nas ADRs em [`vault/decisoes/`](vault/decisoes).
 
-### Serviços (Docker)
+Serviços em Docker:
 
 | Serviço | Papel |
 |---|---|
-| `postgres` | store analítico servido (camada gold) |
-| `dados` | job de ETL medallion: EL (Python → bronze) + **dbt** (staging→intermediate→marts, **star schema**) com testes de dados |
-| `backend` | FastAPI + agente LangGraph + tools + geração do PDF |
-| `grafana` | dashboard interativo (lê a gold) |
+| `postgres` | Store analítico servido (camada gold) |
+| `dados` | Job de ETL: EL em Python (bronze) e **dbt** (staging, intermediate, marts em star schema) com testes de dados |
+| `backend` | FastAPI, agente LangGraph, tools e geração do PDF |
+| `grafana` | Dashboard interativo (lê a gold) |
 
----
+## Métricas e gráficos
 
-## Como rodar
-
-Pré-requisito: **Docker** (com integração WSL2 ativa, se aplicável).
-
-```bash
-cp .env.example .env      # preencha OPENROUTER_API_KEY e NEWSAPI_KEY
-# coloque os CSVs do DATASUS em data/raw/srag/  (ver data/README.md)
-
-docker compose up -d postgres backend grafana      # sobe a stack
-docker compose --profile etl run --rm dados        # roda o ETL (carrega bronze→silver→gold)
-```
-
-- **Hub / demo:** http://localhost:8000/ — ponto de entrada único (métricas ao vivo, gerar
-  relatório PDF, última execução do agente + fontes, e links para tudo)
-- **API:** docs interativas em http://localhost:8000/docs
-- **Grafana:** http://localhost:3000 · usuário `admin`, senha em `GF_SECURITY_ADMIN_PASSWORD` (`.env`) · dashboard *"SRAG — Visão Geral"*
-
-### Endpoints
-
-| Endpoint | O que faz |
-|---|---|
-| `GET /health`, `/health/db` | liveness / readiness |
-| `GET /metricas` | as 4 métricas (JSON) |
-| `POST /relatorio` | gera o **relatório PDF** completo |
-| `GET /agente/grafo` | o grafo do agente em **Mermaid** (visualização do fluxo) |
-
----
-
-## As métricas e os gráficos
-
-| Métrica | Definição | Fonte |
+| Métrica | Definição | Coluna |
 |---|---|---|
-| Taxa de aumento de casos | variação % vs. período anterior de igual duração | `DT_SIN_PRI` |
-| Taxa de mortalidade | óbitos (`EVOLUCAO=2`) / casos com desfecho conhecido | `EVOLUCAO` |
-| Taxa de ocupação de UTI | **proxy:** casos com `UTI=1` / casos com UTI conhecida | `UTI` |
-| Taxa de vacinação | **proxy:** casos vacinados / casos com status conhecido | `VACINA_COV` |
+| Taxa de aumento de casos | Variação percentual vs. período anterior de igual duração | `DT_SIN_PRI` |
+| Taxa de mortalidade | Óbitos (`EVOLUCAO=2`) sobre casos com desfecho conhecido | `EVOLUCAO` |
+| Taxa de ocupação de UTI | Proxy: casos com `UTI=1` sobre casos com UTI conhecida | `UTI` |
+| Taxa de vacinação | Proxy: casos vacinados sobre casos com status conhecido | `VACINA_COV` |
 
-UTI e vacinação são **proxies explícitos** (a base traz status por caso, não leitos totais nem
-cobertura populacional) — a premissa é documentada no relatório. Os denominadores usam apenas
-valores conhecidos (1/2). **Gráficos:** casos diários (30 dias) e mensais (12 meses).
-
----
+UTI e vacinação são proxies explícitos, pois a base traz status por caso, não leitos totais nem
+cobertura populacional. A premissa é documentada no relatório e os denominadores usam apenas
+valores conhecidos (1 ou 2). Gráficos: casos diários (30 dias) e casos mensais (12 meses).
 
 ## Governança, guardrails e dados sensíveis
 
-- **Governança/transparência:** cada execução gera um `run_id` e uma **trilha de auditoria**
-  (nós, tipos, tempos) persistida no Postgres e visível no Grafana; o relatório traz rodapé
-  com modelo, fontes e timestamp. As **ADRs** registram o *porquê* de cada decisão.
-- **Guardrails:** validação de entrada (pydantic), **grounding** (o LLM só narra sobre números
-  das tools), filtro de relevância de notícias, validação de saída e falha explícita/`N/A`.
-- **Dados sensíveis (LGPD):** minimização (só ~6 colunas carregadas), **só agregados são
-  servidos** (camada gold); microdados não saem do banco a nível de indivíduo.
-- **Resiliência:** timeouts, retry com backoff, degradação graciosa (o relatório sai mesmo sem
-  notícias ou com o LLM indisponível, via fallback determinístico).
-
----
+- **Governança e transparência:** cada execução recebe um `run_id` e grava uma trilha de
+  auditoria (nós, tipos, durações, métricas e fontes) no Postgres, visível no hub e no Grafana.
+  O relatório traz rodapé com modelo, fontes e timestamp. As ADRs registram o porquê de cada decisão.
+- **Guardrails:** validação de entrada com pydantic, grounding (o LLM só narra sobre os números
+  das tools), filtro de relevância das notícias, validação de saída e falha explícita ou `N/A`.
+- **Dados sensíveis (LGPD):** minimização (só as colunas necessárias entram no bronze) e apenas
+  agregados são servidos (camada gold); nenhum dado a nível de indivíduo sai do banco.
+- **Resiliência:** timeouts, retry com backoff e degradação graciosa. O relatório sai mesmo sem
+  notícias ou com o LLM indisponível, via narrativa determinística.
 
 ## Qualidade
 
-- **`ruff`** (lint/format) + **`mypy --strict`** + **`import-linter`** (fronteiras do hexágono)
-- **`pytest`** com **cobertura ≥ 85%** (atual ~99%) e casos de borda
-- **`bandit`** (segurança)
-- **GitHub Actions** roda todos os portões em cada push
+Portões automatizados, executados no CI a cada push:
+
+- `ruff` (lint e formatação), `mypy --strict` (tipagem) e `import-linter` (fronteiras do hexágono)
+- `pytest` com cobertura mínima de 85% (atual ~99%) e casos de borda
+- `bandit` (segurança) e `sqlfluff` (lint de SQL do dbt)
 
 ```bash
-cd backend && uv run --extra dev pytest        # testes + cobertura
+cd backend && uv run --extra dev pytest
 uv run --extra dev ruff check . && uv run --extra dev mypy src
 uv run --extra dev lint-imports && uv run --extra dev bandit -r src -q
 ```
 
-### SonarQube (dashboard de qualidade, em Docker)
-
-Serviço opcional (profile `quality`) — dashboard com cobertura, bugs, vulnerabilidades,
-security hotspots, code smells e duplicação.
+**SonarQube** (dashboard de qualidade, opcional, profile `quality`):
 
 ```bash
-docker compose --profile quality up -d sonar-db sonarqube   # http://localhost:9000 (admin/admin)
-# no SonarQube: crie um token e exporte-o
+docker compose --profile quality up -d sonar-db sonarqube   # http://localhost:9000
 cd backend && uv run --extra dev pytest                     # gera coverage.xml
-SONAR_TOKEN=<seu-token> docker compose --profile quality run --rm sonar-scanner
+SONAR_TOKEN=<token> docker compose --profile quality run --rm sonar-scanner
 ```
 
-Última análise: **cobertura 99,4% · 0 bugs · 0 vulnerabilidades · 0 hotspots · 0% duplicação**.
-Os adapters de I/O ficam fora da métrica de cobertura (testados por integração).
+Última análise: cobertura 99,4%, 0 bugs, 0 vulnerabilidades, 0 hotspots, 0% duplicação. Os
+adapters de I/O ficam fora da métrica de cobertura (são cobertos por testes de integração).
 
----
+## Stack e documentação
 
-## Stack
+Python, Docker, Postgres, dbt (medallion), FastAPI, LangGraph, Claude via OpenRouter, NewsAPI,
+Plotly, WeasyPrint, Grafana, `structlog`, `tenacity`, e `uv`/`ruff`/`mypy`/`pytest`. Tracing de
+LLM opcional via OpenRouter Broadcast para o LangSmith (configurado no painel do OpenRouter).
 
-Python · Docker · **Postgres** · **dbt** (medallion) · **FastAPI** · **LangGraph** ·
-**Claude via OpenRouter** · **NewsAPI** · **Plotly + WeasyPrint** (PDF) · **Grafana** ·
-`structlog` · `tenacity` · **uv/ruff/mypy/pytest**. Tracing de LLM opcional via **OpenRouter
-Broadcast → LangSmith** (config no painel do OpenRouter, sem código).
-
-## Documentação
-
-O diretório [`vault/`](vault/README.md) é a documentação viva do projeto: arquitetura,
-domínio, ADRs e roadmap. Dados em [`data/README.md`](data/README.md).
+Documentação viva em [`vault/`](vault/README.md) (arquitetura, domínio, ADRs, princípios SOLID).
+Dados em [`data/README.md`](data/README.md) e ETL em [`dados/README.md`](dados/README.md).
