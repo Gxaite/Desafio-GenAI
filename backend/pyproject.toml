@@ -76,6 +76,7 @@ omit = [
     "*/infrastructure/report/pdf_renderer.py",
     "*/infrastructure/report/charts.py",
     "*/infrastructure/report/renderer.py",
+    "*/infrastructure/news/postgres_noticias.py",
 ]
 
 [tool.coverage.report]

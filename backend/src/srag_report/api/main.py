@@ -1,6 +1,7 @@
 """API FastAPI — ponto de entrada do serviço backend.
 
-Rotas: health checks, métricas (JSON) e relatório (PDF gerado pelo agente).
+Rotas: health, métricas (JSON), relatório (PDF, bloqueante e streaming), grafo do agente,
+auditoria das execuções e explorador de notícias.
 """
 
 from __future__ import annotations
@@ -12,13 +13,14 @@ from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse, StreamingResponse
 
 from srag_report.api.landing import GRAFO, PAGINA
+from srag_report.application.noticias import atualizar_historico
 from srag_report.application.orchestration import construir_grafo
 from srag_report.application.relatorio import gerar_relatorio_pdf, gerar_relatorio_stream
 from srag_report.application.tools import calcular_metricas
 from srag_report.composition import montar_dependencias
 from srag_report.config.settings import settings
 from srag_report.domain.errors import SragReportError
-from srag_report.domain.models import ExecucaoAgente, Metrica, ResumoExecucao
+from srag_report.domain.models import ExecucaoAgente, Metrica, Noticia, ResumoExecucao
 
 app = FastAPI(title="SRAG Report API", version="0.1.0")
 
@@ -51,9 +53,9 @@ def health_db() -> dict[str, str]:
 @app.get("/metricas")
 def metricas() -> list[Metrica]:
     """As 4 métricas dos últimos 30 dias (JSON)."""
-    repo, _fonte, _llm, _aud, _rend = montar_dependencias()
+    deps = montar_dependencias()
     try:
-        return calcular_metricas(repo)
+        return calcular_metricas(deps.repo)
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -62,8 +64,8 @@ def metricas() -> list[Metrica]:
 def agente_grafo(format: str = "html") -> Response:
     """Fluxo do agente: página HTML (default) ou a fonte Mermaid (?format=mermaid)."""
     if format == "mermaid":
-        repo, fonte, llm, _aud, _rend = montar_dependencias()
-        mermaid = construir_grafo(repo, fonte, llm).get_graph().draw_mermaid()
+        deps = montar_dependencias()
+        mermaid = construir_grafo(deps.repo, deps.fonte, deps.llm).get_graph().draw_mermaid()
         return Response(content=mermaid, media_type="text/plain; charset=utf-8")
     return HTMLResponse(GRAFO)
 
@@ -71,9 +73,9 @@ def agente_grafo(format: str = "html") -> Response:
 @app.get("/auditoria/execucoes")
 def listar_execucoes(limite: int = 20) -> list[ResumoExecucao]:
     """Execuções recentes do agente (observabilidade)."""
-    _repo, _fonte, _llm, auditoria, _rend = montar_dependencias()
+    deps = montar_dependencias()
     try:
-        return auditoria.listar_execucoes(limite)
+        return deps.auditoria.listar_execucoes(limite)
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -81,9 +83,9 @@ def listar_execucoes(limite: int = 20) -> list[ResumoExecucao]:
 @app.get("/auditoria/execucoes/{run_id}")
 def obter_execucao(run_id: str) -> ExecucaoAgente:
     """Detalhe de uma execução: trilha (com durações), métricas e fontes usadas."""
-    _repo, _fonte, _llm, auditoria, _rend = montar_dependencias()
+    deps = montar_dependencias()
     try:
-        execucao = auditoria.obter_execucao(run_id)
+        execucao = deps.auditoria.obter_execucao(run_id)
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     if execucao is None:
@@ -91,14 +93,34 @@ def obter_execucao(run_id: str) -> ExecucaoAgente:
     return execucao
 
 
+@app.get("/noticias")
+def noticias(limite: int = 50) -> list[Noticia]:
+    """Histórico de notícias coletadas (explorador)."""
+    deps = montar_dependencias()
+    try:
+        return deps.noticias.listar(limite)
+    except SragReportError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/noticias/buscar")
+def noticias_buscar() -> dict[str, int]:
+    """Coleta notícias de várias consultas e salva no histórico. Retorna quantas são novas."""
+    deps = montar_dependencias()
+    try:
+        return {"novas": atualizar_historico(deps.fonte, deps.noticias)}
+    except SragReportError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
 @app.post("/relatorio")
 def relatorio() -> Response:
     """Gera o relatório completo (métricas + gráficos + narrativa) em PDF."""
-    repo, fonte, llm, auditoria, renderizador = montar_dependencias()
+    deps = montar_dependencias()
     try:
         pdf, estado = gerar_relatorio_pdf(
-            repo, fonte, llm, settings.openrouter_model_narrative, renderizador,
-            auditoria=auditoria,
+            deps.repo, deps.fonte, deps.llm, settings.openrouter_model_narrative,
+            deps.renderizador, auditoria=deps.auditoria,
         )
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -116,13 +138,13 @@ def relatorio() -> Response:
 @app.get("/relatorio/stream", include_in_schema=False)
 def relatorio_stream() -> StreamingResponse:
     """Gera o relatório emitindo o progresso do agente nó a nó (SSE) e o PDF ao final."""
-    repo, fonte, llm, auditoria, renderizador = montar_dependencias()
+    deps = montar_dependencias()
 
     def gen() -> Iterator[str]:
         try:
             for ev in gerar_relatorio_stream(
-                repo, fonte, llm, settings.openrouter_model_narrative,
-                renderizador, auditoria=auditoria,
+                deps.repo, deps.fonte, deps.llm, settings.openrouter_model_narrative,
+                deps.renderizador, auditoria=deps.auditoria,
             ):
                 yield f"data: {json.dumps(ev)}\n\n"
         except SragReportError as exc:

@@ -85,3 +85,15 @@ class RenderizadorRelatorio(Protocol):
 
     def renderizar(self, dados: DadosRelatorio) -> bytes:
         ...
+
+
+class RepositorioNoticias(Protocol):
+    """Histórico de notícias coletadas (explorador). Deduplica por URL."""
+
+    def salvar(self, noticias: list[Noticia]) -> int:
+        """Persiste as notícias novas (ignora URLs já existentes). Retorna quantas entraram."""
+        ...
+
+    def listar(self, limite: int = 50, fonte: str | None = None) -> list[Noticia]:
+        """Notícias do histórico, mais recentes primeiro, opcionalmente por fonte."""
+        ...

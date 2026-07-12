@@ -93,6 +93,18 @@ PAGINA = """<!doctype html>
   .srcs .s{font-size:12.5px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 12px}
   .srcs .s b{color:var(--ink);font-weight:600}
 
+  /* explorador de notícias */
+  .nbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .nbar span{font-size:13px;color:var(--muted)}
+  .news{display:flex;flex-direction:column}
+  .ni{display:grid;grid-template-columns:130px 1fr 88px;gap:14px;align-items:center;
+    padding:12px 4px;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--ink)}
+  .ni:last-child{border-bottom:none} .ni:hover{background:var(--soft)}
+  .ni .f{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:99px;
+    padding:2px 9px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ni .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ni .dt{color:var(--faint);text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+
   footer{color:var(--faint);font-size:13px;padding:56px 0 40px;text-align:center;
     border-top:1px solid var(--line);margin-top:72px;line-height:1.7}
   .tech{margin-top:8px;color:var(--muted);font-size:12.5px}
@@ -147,6 +159,15 @@ PAGINA = """<!doctype html>
     <div class="thead" id="thead">carregando</div>
     <div id="wf"></div>
     <div class="srcs" id="srcs"></div>
+  </div>
+
+  <div class="sec">Explorador de notícias</div>
+  <div class="card panel">
+    <div class="nbar">
+      <span id="ncount">carregando</span>
+      <button class="btn ghost" id="buscar" style="padding:8px 14px">Buscar mais</button>
+    </div>
+    <div class="news" id="news"></div>
   </div>
 </main>
 
@@ -215,7 +236,25 @@ function gerar(){
   es.onerror=()=>{ $('#status').textContent='Conexão de streaming perdida.'; es.close(); bs.forEach(b=>b.disabled=false); };
 }
 $('#gerar').onclick=gerar; $('#gerar2').onclick=gerar;
-health(); kpis(); execucao();
+
+async function noticias(){
+  try{
+    const ns = await (await j('/noticias?limite=40')).json();
+    $('#ncount').textContent = ns.length + ' notícias no histórico';
+    $('#news').innerHTML = ns.length ? ns.map(n=>`<a class="ni" href="${n.url}" target="_blank">
+      <span class="f">${n.fonte||''}</span><span class="t">${n.titulo}</span>
+      <span class="dt">${n.publicado_em||''}</span></a>`).join('')
+      : '<div style="color:var(--faint);padding:8px 4px">histórico vazio. clique em Buscar mais.</div>';
+  }catch{ $('#ncount').textContent='indisponível'; }
+}
+$('#buscar').onclick=async e=>{
+  const b=e.target; b.disabled=true; b.textContent='buscando…';
+  try{ const r=await (await j('/noticias/buscar',{method:'POST'})).json(); b.textContent=(r.novas||0)+' novas'; await noticias(); }
+  catch{ b.textContent='falhou'; }
+  finally{ setTimeout(()=>{b.disabled=false; b.textContent='Buscar mais';}, 1800); }
+};
+
+health(); kpis(); execucao(); noticias();
 </script>
 </body></html>"""
 

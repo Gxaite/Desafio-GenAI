@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from srag_report.application.relatorio import gerar_relatorio_pdf
+from srag_report.application.relatorio import gerar_relatorio_pdf, gerar_relatorio_stream
 from srag_report.domain.models import (
     AgregadoSRAG,
     DadosRelatorio,
@@ -88,3 +88,11 @@ def test_gera_pdf_sem_auditoria() -> None:
     rend = _Render()
     pdf, _ = gerar_relatorio_pdf(_Repo(), _Fonte(), _LLM(), "m", rend)
     assert pdf == b"%PDF-fake"
+
+
+def test_stream_emite_eventos_por_no_e_pdf_no_fim() -> None:
+    eventos = list(gerar_relatorio_stream(_Repo(), _Fonte(), _LLM(), "m", _Render()))
+    passos = [e["no"] for e in eventos if e["tipo"] == "evento"]
+    assert passos == ["metricas", "graficos", "noticias", "narrativa"]
+    fim = eventos[-1]
+    assert fim["tipo"] == "fim" and fim["run_id"] and fim["pdf_b64"]

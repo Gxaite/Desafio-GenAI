@@ -62,6 +62,7 @@ class Noticia(BaseModel):
     url: str
     publicado_em: date | None = None
     descricao: str | None = None
+    capturado_em: datetime | None = None
 
 
 class EventoAuditoria(BaseModel):

@@ -14,11 +14,11 @@ log = structlog.get_logger()
 
 
 def main() -> None:
-    repo, fonte, llm, auditoria, renderizador = montar_dependencias()
+    deps = montar_dependencias()
     log.info("relatorio.start", modelo=settings.openrouter_model_narrative)
     pdf, estado = gerar_relatorio_pdf(
-        repo, fonte, llm, settings.openrouter_model_narrative, renderizador,
-        auditoria=auditoria,
+        deps.repo, deps.fonte, deps.llm, settings.openrouter_model_narrative,
+        deps.renderizador, auditoria=deps.auditoria,
     )
 
     destino = Path(settings.report_dir) / f"relatorio-srag-{estado['referencia']}.pdf"
