@@ -21,7 +21,7 @@ def test_prompt_faz_grounding_nos_numeros_e_fontes() -> None:
         [Noticia(titulo="SRAG sobe", fonte="G1", url="http://x")],
         date(2026, 7, 5),
     )
-    assert "SOMENTE" in system  # instrução anti-alucinação
+    assert "somente" in system.lower()  # instrução anti-alucinação (grounding)
     assert "Taxa de mortalidade" in user and "5.0%" in user
     assert "SRAG sobe" in user and "G1" in user
 

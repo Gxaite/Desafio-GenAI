@@ -46,8 +46,9 @@ src = ["src"]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
-# Template HTML embutido (CSS/JS) — linhas longas são legítimas.
+# Templates HTML embutidos (CSS/JS): linhas longas são legítimas.
 "**/landing.py" = ["E501"]
+"**/pdf_renderer.py" = ["E501"]
 
 [tool.mypy]
 strict = true

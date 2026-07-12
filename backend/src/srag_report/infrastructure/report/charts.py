@@ -41,6 +41,6 @@ def _png_data_uri(fig: go.Figure) -> str:
 
 def graficos_data_uri(series: SeriesGraficos) -> tuple[str, str]:
     """(gráfico diário, gráfico mensal) como data URIs PNG."""
-    diario = _barras(series.diaria_30d, "Casos diários — últimos 30 dias", "#2563eb")
-    mensal = _barras(series.mensal_12m, "Casos mensais — últimos 12 meses", "#7c3aed")
+    diario = _barras(series.diaria_30d, "Casos diários (últimos 30 dias)", "#2563eb")
+    mensal = _barras(series.mensal_12m, "Casos mensais (últimos 12 meses)", "#7c3aed")
     return _png_data_uri(diario), _png_data_uri(mensal)

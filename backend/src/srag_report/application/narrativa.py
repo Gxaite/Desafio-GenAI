@@ -12,10 +12,10 @@ from srag_report.domain.errors import ErroGuardrail
 from srag_report.domain.models import Metrica, Noticia
 
 _SYSTEM = (
-    "Você é um analista de saúde pública. Escreva um parágrafo objetivo (3-5 frases) em "
-    "português contextualizando as métricas de SRAG fornecidas, citando as notícias quando "
-    "pertinente. Use SOMENTE os números e fontes fornecidos — nunca invente dados nem "
-    "cite valores que não estejam na lista."
+    "Você é um analista de saúde pública. Escreva de 2 a 3 frases objetivas, em português, "
+    "contextualizando as métricas de SRAG fornecidas e citando uma notícia quando pertinente. "
+    "Use somente os números e as fontes fornecidos; nunca invente dados nem cite valores fora "
+    "da lista. Vá direto ao ponto, sem introduções e sem travessões."
 )
 
 
@@ -54,7 +54,6 @@ def narrativa_fallback(metricas: list[Metrica], referencia: date | None) -> str:
     ]
     resumo = "; ".join(partes) if partes else "sem métricas disponíveis"
     return (
-        f"Relatório de SRAG referente a {referencia}. "
-        f"Indicadores dos últimos 30 dias: {resumo}. "
-        "(Narrativa automática — contextualização por LLM indisponível nesta execução.)"
+        f"Nos últimos 30 dias (referência {referencia}): {resumo}. "
+        "Narrativa automática: contextualização por LLM indisponível nesta execução."
     )
