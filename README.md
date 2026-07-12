@@ -61,6 +61,9 @@ flowchart TD
     backend -.registra.-> AUDIT
 ```
 
+> Versão em **PDF** (entregável): [`docs/diagrama-conceitual.pdf`](docs/diagrama-conceitual.pdf)
+> — reproduzível via `uv run --with weasyprint python docs/gerar_diagrama.py`.
+
 - **Camadas de código** (`backend`): `domain/` (puro, sem I/O) → `application/` (casos de uso
   + orquestração LangGraph + guardrails) → `infrastructure/` (adapters: Postgres, NewsAPI,
   OpenRouter, relatório) + `observability/`, `api/`, `cli.py` (composition root).
