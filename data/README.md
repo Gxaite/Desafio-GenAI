@@ -2,7 +2,7 @@
 
 Layout inspirado em convenções de projetos de dados de referência
 (**Cookiecutter Data Science** + camadas estilo **medallion**: bronze → silver → gold).
-Detalhes de arquitetura no vault: `../vault/arquitetura/camada-dados.md`.
+Detalhes de arquitetura no vault: [`../vault/camada-dados.md`](../vault/camada-dados.md).
 
 ## Camadas
 
@@ -18,7 +18,8 @@ Detalhes de arquitetura no vault: `../vault/arquitetura/camada-dados.md`.
 - **Marts servidos vivem no Postgres** (store analítico); os arquivos aqui são artefatos
   de pipeline, reprodutíveis a partir de `raw/`.
 - **Nomes:** minúsculas, kebab-case, datas **ISO 8601** (`AAAA-MM-DD`), sortáveis.
-- **Dados sensíveis**: microdados de saúde — ver `../vault/arquitetura/dados-sensiveis.md`.
+- **Dados sensíveis**: microdados de saúde — ver a seção Dados Sensíveis (LGPD) em
+  [`../vault/qualidade-governanca.md`](../vault/qualidade-governanca.md).
 
 ## Convenção de nomes de arquivo
 `<dataset>-<ano>-extracao-<AAAA-MM-DD>.<ext>`
