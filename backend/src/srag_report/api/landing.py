@@ -65,11 +65,15 @@ PAGINA = """<!doctype html>
   .kpi .v{font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums}
   .kpi .c{font-size:12px;color:var(--faint);margin-top:3px}
 
-  .step{padding:22px 18px;text-align:center}
+  .step{padding:22px 18px;text-align:center;transition:box-shadow .2s,border-color .2s}
   .step .n{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);color:var(--muted);
-    font-weight:650;font-size:12px;display:grid;place-items:center;margin:0 auto 12px}
+    font-weight:650;font-size:12px;display:grid;place-items:center;margin:0 auto 12px;transition:.2s}
   .step h3{font-size:14.5px;margin:0 0 5px;font-weight:600}
   .step p{font-size:13px;color:var(--muted);margin:0 auto;max-width:24ch}
+  .step .sms{font-size:11px;color:var(--faint);margin-top:8px;min-height:14px;font-variant-numeric:tabular-nums}
+  .step.run{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+  .step.run .n{border-color:var(--accent);color:var(--accent)}
+  .step.done .n{background:var(--ink);color:#fff;border-color:var(--ink)}
 
   .report{padding:32px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
   .report h3{margin:0;font-size:19px;font-weight:650}
@@ -125,10 +129,10 @@ PAGINA = """<!doctype html>
 
   <div class="sec">Como o agente trabalha</div>
   <div class="grid4">
-    <div class="card step"><div class="n">1</div><h3>Métricas</h3><p>Calcula as quatro taxas no banco, em SQL determinístico.</p></div>
-    <div class="card step"><div class="n">2</div><h3>Gráficos</h3><p>Séries de casos diários e mensais.</p></div>
-    <div class="card step"><div class="n">3</div><h3>Notícias</h3><p>Busca e filtra notícias em tempo real.</p></div>
-    <div class="card step"><div class="n">4</div><h3>Narrativa</h3><p>O LLM contextualiza apenas os números apurados.</p></div>
+    <div class="card step" data-no="metricas"><div class="n">1</div><h3>Métricas</h3><p>Calcula as quatro taxas no banco, em SQL determinístico.</p><div class="sms"></div></div>
+    <div class="card step" data-no="graficos"><div class="n">2</div><h3>Gráficos</h3><p>Séries de casos diários e mensais.</p><div class="sms"></div></div>
+    <div class="card step" data-no="noticias"><div class="n">3</div><h3>Notícias</h3><p>Busca e filtra notícias em tempo real.</p><div class="sms"></div></div>
+    <div class="card step" data-no="narrativa"><div class="n">4</div><h3>Narrativa</h3><p>O LLM contextualiza apenas os números apurados.</p><div class="sms"></div></div>
   </div>
 
   <div class="sec">Gerar relatório do sistema</div>
@@ -190,16 +194,25 @@ async function execucao(){
       : '<span class="s">sem notícias nesta execução</span>';
   }catch{ $('#thead').textContent='trilha indisponível'; }
 }
-async function gerar(){
+const ORDEM=['metricas','graficos','noticias','narrativa'];
+function resetSteps(){ document.querySelectorAll('.step').forEach(s=>{s.classList.remove('run','done');s.querySelector('.sms').textContent='';}); }
+function passoRun(no){ const s=document.querySelector('.step[data-no="'+no+'"]'); if(s) s.classList.add('run'); }
+function passoDone(no,ms){ const s=document.querySelector('.step[data-no="'+no+'"]'); if(s){ s.classList.remove('run'); s.classList.add('done'); s.querySelector('.sms').textContent=ms+' ms'; } }
+function abrirPdf(b64){ const bin=atob(b64); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
+  window.open(URL.createObjectURL(new Blob([a],{type:'application/pdf'})),'_blank'); }
+
+function gerar(){
   const bs=[$('#gerar'),$('#gerar2')]; bs.forEach(b=>b.disabled=true);
-  $('#status').textContent='Executando o agente. Isso leva alguns segundos.';
-  try{
-    const r = await j('/relatorio',{method:'POST'});
-    window.open(URL.createObjectURL(await r.blob()),'_blank');
-    $('#status').innerHTML='Relatório pronto. Execução <b>'+(r.headers.get('X-Run-Id')||'').slice(0,12)+'</b>';
-    execucao();
-  }catch(e){ $('#status').textContent='Não foi possível gerar ('+e.message+'). Verifique as chaves e o ETL.'; }
-  finally{ bs.forEach(b=>b.disabled=false); }
+  resetSteps(); passoRun('metricas');
+  $('#status').textContent='Executando o agente ao vivo…';
+  const es=new EventSource('/relatorio/stream');
+  es.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(d.tipo==='evento'){ passoDone(d.no,d.duracao_ms); const i=ORDEM.indexOf(d.no); if(i>=0&&i+1<ORDEM.length) passoRun(ORDEM[i+1]); }
+    else if(d.tipo==='fim'){ abrirPdf(d.pdf_b64); $('#status').innerHTML='Relatório pronto. Execução <b>'+(d.run_id||'').slice(0,12)+'</b>'; es.close(); bs.forEach(b=>b.disabled=false); execucao(); }
+    else if(d.tipo==='erro'){ $('#status').textContent='Não foi possível gerar ('+d.msg+').'; es.close(); bs.forEach(b=>b.disabled=false); }
+  };
+  es.onerror=()=>{ $('#status').textContent='Conexão de streaming perdida.'; es.close(); bs.forEach(b=>b.disabled=false); };
 }
 $('#gerar').onclick=gerar; $('#gerar2').onclick=gerar;
 health(); kpis(); execucao();

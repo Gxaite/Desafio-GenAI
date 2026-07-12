@@ -5,12 +5,15 @@ Rotas: health checks, métricas (JSON) e relatório (PDF gerado pelo agente).
 
 from __future__ import annotations
 
+import json
+from collections.abc import Iterator
+
 from fastapi import FastAPI, HTTPException, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 
 from srag_report.api.landing import GRAFO, PAGINA
 from srag_report.application.orchestration import construir_grafo
-from srag_report.application.relatorio import gerar_relatorio_pdf
+from srag_report.application.relatorio import gerar_relatorio_pdf, gerar_relatorio_stream
 from srag_report.application.tools import calcular_metricas
 from srag_report.composition import montar_dependencias
 from srag_report.config.settings import settings
@@ -108,3 +111,21 @@ def relatorio() -> Response:
             "X-Run-Id": estado["run_id"] or "",
         },
     )
+
+
+@app.get("/relatorio/stream", include_in_schema=False)
+def relatorio_stream() -> StreamingResponse:
+    """Gera o relatório emitindo o progresso do agente nó a nó (SSE) e o PDF ao final."""
+    repo, fonte, llm, auditoria, renderizador = montar_dependencias()
+
+    def gen() -> Iterator[str]:
+        try:
+            for ev in gerar_relatorio_stream(
+                repo, fonte, llm, settings.openrouter_model_narrative,
+                renderizador, auditoria=auditoria,
+            ):
+                yield f"data: {json.dumps(ev)}\n\n"
+        except SragReportError as exc:
+            yield f"data: {json.dumps({'tipo': 'erro', 'msg': str(exc)})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream")
