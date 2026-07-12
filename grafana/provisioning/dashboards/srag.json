@@ -4,7 +4,7 @@
   "tags": ["srag", "saude"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "",
   "editable": true,
   "time": { "from": "now-2y", "to": "now" },
@@ -31,106 +31,106 @@
   "panels": [
     {
       "id": 1, "type": "stat", "title": "Casos (período)",
-      "gridPos": { "h": 4, "w": 5, "x": 0, "y": 0 },
+      "gridPos": { "h": 5, "w": 5, "x": 0, "y": 0 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
-      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
-      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
-      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT sum(casos) AS casos FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote})" } ]
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "color": { "mode": "fixed", "fixedColor": "#3b82f6" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "textMode": "value_and_name", "reduceOptions": { "calcs": ["sum"], "fields": "" } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT dt::timestamp AS time, sum(casos) AS \"Casos\" FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote}) GROUP BY dt ORDER BY dt" } ]
     },
     {
       "id": 2, "type": "stat", "title": "Óbitos (período)",
-      "gridPos": { "h": 4, "w": 5, "x": 5, "y": 0 },
+      "gridPos": { "h": 5, "w": 5, "x": 5, "y": 0 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
-      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
-      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
-      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT sum(ev_obito) AS obitos FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote})" } ]
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "color": { "mode": "fixed", "fixedColor": "#ef4444" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "textMode": "value_and_name", "reduceOptions": { "calcs": ["sum"], "fields": "" } },
+      "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT dt::timestamp AS time, sum(ev_obito) AS \"Óbitos\" FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote}) GROUP BY dt ORDER BY dt" } ]
     },
     {
-      "id": 3, "type": "stat", "title": "Mortalidade (%)",
-      "gridPos": { "h": 4, "w": 5, "x": 10, "y": 0 },
+      "id": 3, "type": "gauge", "title": "Mortalidade (%)",
+      "gridPos": { "h": 5, "w": 5, "x": 10, "y": 0 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
-      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "color": { "mode": "thresholds" }, "thresholds": { "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 5 }, { "color": "red", "value": 10 } ] } }, "overrides": [] },
-      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "min": 0, "max": 20, "color": { "mode": "thresholds" }, "thresholds": { "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 5 }, { "color": "red", "value": 10 } ] } }, "overrides": [] },
+      "options": { "showThresholdLabels": false, "showThresholdMarkers": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
       "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT round(100.0*sum(ev_obito)/nullif(sum(ev_cura+ev_obito+ev_obito_outras),0),2) AS valor FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote})" } ]
     },
     {
-      "id": 4, "type": "stat", "title": "UTI (%, proxy)",
-      "gridPos": { "h": 4, "w": 4, "x": 15, "y": 0 },
+      "id": 4, "type": "gauge", "title": "UTI (%, proxy)",
+      "gridPos": { "h": 5, "w": 4, "x": 15, "y": 0 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
-      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
-      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "min": 0, "max": 60, "color": { "mode": "thresholds" }, "thresholds": { "steps": [ { "color": "#3b82f6", "value": null }, { "color": "orange", "value": 40 }, { "color": "red", "value": 70 } ] } }, "overrides": [] },
+      "options": { "showThresholdLabels": false, "showThresholdMarkers": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
       "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT round(100.0*sum(uti_sim)/nullif(sum(uti_sim+uti_nao),0),2) AS valor FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote})" } ]
     },
     {
-      "id": 5, "type": "stat", "title": "Vacinação (%, proxy)",
-      "gridPos": { "h": 4, "w": 5, "x": 19, "y": 0 },
+      "id": 5, "type": "gauge", "title": "Vacinação (%, proxy)",
+      "gridPos": { "h": 5, "w": 5, "x": 19, "y": 0 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
-      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
-      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "min": 0, "max": 100, "color": { "mode": "thresholds" }, "thresholds": { "steps": [ { "color": "red", "value": null }, { "color": "orange", "value": 40 }, { "color": "green", "value": 70 } ] } }, "overrides": [] },
+      "options": { "showThresholdLabels": false, "showThresholdMarkers": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
       "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT round(100.0*sum(vac_sim)/nullif(sum(vac_sim+vac_nao),0),2) AS valor FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote})" } ]
     },
     {
       "id": 6, "type": "timeseries", "title": "Casos por dia",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
-      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 1 }, "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 25, "gradientMode": "opacity", "lineWidth": 2, "showPoints": "never" }, "color": { "mode": "fixed", "fixedColor": "#3b82f6" } }, "overrides": [] },
       "options": { "legend": { "showLegend": false }, "tooltip": { "mode": "single" } },
       "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT dt::timestamp AS time, sum(casos) AS \"Casos\" FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote}) GROUP BY dt ORDER BY dt" } ]
     },
     {
       "id": 7, "type": "timeseries", "title": "Casos por região (semanal)",
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 12 },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 13 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
-      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "stacking": { "mode": "normal" } } }, "overrides": [] },
-      "options": { "legend": { "showLegend": true, "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 18, "gradientMode": "opacity", "lineWidth": 1, "showPoints": "never", "stacking": { "mode": "normal" } } }, "overrides": [] },
+      "options": { "legend": { "showLegend": true, "placement": "bottom", "displayMode": "list" }, "tooltip": { "mode": "multi" } },
       "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT date_trunc('week',dt)::timestamp AS time, sum(casos) FILTER (WHERE regiao='Norte') AS \"Norte\", sum(casos) FILTER (WHERE regiao='Nordeste') AS \"Nordeste\", sum(casos) FILTER (WHERE regiao='Centro-Oeste') AS \"Centro-Oeste\", sum(casos) FILTER (WHERE regiao='Sudeste') AS \"Sudeste\", sum(casos) FILTER (WHERE regiao='Sul') AS \"Sul\" FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote}) GROUP BY 1 ORDER BY 1" } ]
     },
     {
       "id": 8, "type": "timeseries", "title": "Mortalidade e UTI (%, mensal)",
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 12 },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 13 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
-      "fieldConfig": { "defaults": { "unit": "percent", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 0 } }, "overrides": [] },
+      "fieldConfig": { "defaults": { "unit": "percent", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 0, "showPoints": "auto" } }, "overrides": [] },
       "options": { "legend": { "showLegend": true, "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT date_trunc('month',dt)::timestamp AS time, round(100.0*sum(ev_obito)/nullif(sum(ev_cura+ev_obito+ev_obito_outras),0),2) AS \"Mortalidade %\", round(100.0*sum(uti_sim)/nullif(sum(uti_sim+uti_nao),0),2) AS \"UTI %\" FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote}) GROUP BY 1 ORDER BY 1" } ]
     },
     {
       "id": 9, "type": "barchart", "title": "Casos por UF (período)",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
-      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "fieldConfig": { "defaults": { "color": { "mode": "continuous-BlPu" }, "custom": { "fillOpacity": 85, "lineWidth": 0 } }, "overrides": [] },
       "options": { "xField": "uf", "showValue": "never", "legend": { "showLegend": false } },
       "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT uf, sum(casos) AS casos FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote}) GROUP BY uf ORDER BY casos DESC" } ]
     },
     {
       "id": 10, "type": "piechart", "title": "Casos por região (período)",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 },
       "datasource": { "type": "postgres", "uid": "postgres-srag" },
       "fieldConfig": { "defaults": {}, "overrides": [] },
-      "options": { "legend": { "showLegend": true, "placement": "right" }, "pieType": "donut", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
+      "options": { "legend": { "showLegend": true, "placement": "right", "values": ["percent"] }, "pieType": "donut", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
       "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT regiao, sum(casos) AS casos FROM gold.gold_mart_srag_diario WHERE $__timeFilter(dt) AND uf IN (${uf:singlequote}) GROUP BY regiao ORDER BY casos DESC" } ]
     },
     {
       "id": 20, "type": "row", "title": "Observabilidade do agente",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 }, "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 }, "collapsed": true,
       "panels": [
         {
           "id": 21, "type": "table", "title": "Execuções do agente",
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 30 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 31 },
           "datasource": { "type": "postgres", "uid": "postgres-srag" },
           "options": { "showHeader": true },
           "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT executado_em AS \"Execução\", referencia AS \"Referência\", run_id AS \"Run ID\" FROM auditoria.agente_run ORDER BY executado_em DESC LIMIT 20" } ]
         },
         {
           "id": 22, "type": "barchart", "title": "Duração por etapa (ms, última execução)",
-          "gridPos": { "h": 8, "w": 6, "x": 12, "y": 30 },
+          "gridPos": { "h": 8, "w": 6, "x": 12, "y": 31 },
           "datasource": { "type": "postgres", "uid": "postgres-srag" },
-          "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "orange" }, "unit": "ms" }, "overrides": [] },
+          "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "orange" }, "unit": "ms", "custom": { "fillOpacity": 85, "lineWidth": 0 } }, "overrides": [] },
           "options": { "xField": "etapa", "showValue": "auto", "legend": { "showLegend": false } },
           "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT no AS etapa, duracao_ms FROM auditoria.agente_evento WHERE run_id=(SELECT run_id FROM auditoria.agente_run ORDER BY executado_em DESC LIMIT 1) ORDER BY ordem" } ]
         },
         {
           "id": 23, "type": "table", "title": "Fontes consultadas (última execução)",
-          "gridPos": { "h": 8, "w": 6, "x": 18, "y": 30 },
+          "gridPos": { "h": 8, "w": 6, "x": 18, "y": 31 },
           "datasource": { "type": "postgres", "uid": "postgres-srag" },
           "options": { "showHeader": true },
           "targets": [ { "refId": "A", "format": "table", "datasource": { "type": "postgres", "uid": "postgres-srag" }, "rawSql": "SELECT fonte AS \"Fonte\", titulo AS \"Notícia\" FROM auditoria.agente_noticia WHERE run_id=(SELECT run_id FROM auditoria.agente_run ORDER BY executado_em DESC LIMIT 1)" } ]
