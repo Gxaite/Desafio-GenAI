@@ -94,7 +94,9 @@ docker compose up -d postgres backend grafana      # sobe a stack
 docker compose --profile etl run --rm dados        # roda o ETL (carrega bronze→silver→gold)
 ```
 
-- **API:** http://localhost:8000 · docs interativas em **/docs**
+- **Hub / demo:** http://localhost:8000/ — ponto de entrada único (métricas ao vivo, gerar
+  relatório PDF, última execução do agente + fontes, e links para tudo)
+- **API:** docs interativas em http://localhost:8000/docs
 - **Grafana:** http://localhost:3000 · usuário `admin`, senha em `GF_SECURITY_ADMIN_PASSWORD` (`.env`) · dashboard *"SRAG — Visão Geral"*
 
 ### Endpoints

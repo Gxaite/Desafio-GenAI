@@ -6,7 +6,9 @@ Rotas: health checks, métricas (JSON) e relatório (PDF gerado pelo agente).
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import HTMLResponse
 
+from srag_report.api.landing import PAGINA
 from srag_report.application.orchestration import construir_grafo
 from srag_report.application.relatorio import gerar_relatorio_pdf
 from srag_report.application.tools import calcular_metricas
@@ -16,6 +18,12 @@ from srag_report.domain.errors import SragReportError
 from srag_report.domain.models import ExecucaoAgente, Metrica, ResumoExecucao
 
 app = FastAPI(title="SRAG Report API", version="0.1.0")
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def landing() -> str:
+    """Página-hub: ponto de entrada único para demonstrar o projeto."""
+    return PAGINA
 
 
 @app.get("/health")
