@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: int_srag__casos
+  - name: int_srag__casos_preparados
     description: >
       Casos de SRAG deduplicados por notificação (1 linha/caso) com flags de negócio
       (óbito, UTI, vacinação e "conhecido") que alimentam o fato agregado.

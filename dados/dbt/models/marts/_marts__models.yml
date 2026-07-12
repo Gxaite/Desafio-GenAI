@@ -8,7 +8,7 @@ models:
         description: Sigla da UF (PK). 'NA' para desconhecida.
         data_tests: [not_null, unique]
       - name: uf_nome
-        description: Nome da UF.
+        description: Nome por extenso da UF.
       - name: regiao
         description: Região geográfica (Norte, Nordeste, Centro-Oeste, Sudeste, Sul).
         data_tests:
@@ -17,13 +17,23 @@ models:
                 values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
 
   - name: dim_data
-    description: Dimensão calendário cobrindo o intervalo de datas de sintoma dos casos.
+    description: Dimensão calendário, um registro por dia no intervalo de sintomas observado.
     columns:
       - name: data
         description: Data (PK).
         data_tests: [not_null, unique]
+      - name: ano
+        description: Ano (inteiro).
+      - name: mes
+        description: Mês do ano (1-12).
       - name: ano_mes
         description: Competência mensal (YYYY-MM), usada na série de 12 meses.
+      - name: dia
+        description: Dia do mês (1-31).
+      - name: dia_semana
+        description: Dia da semana ISO (1=segunda … 7=domingo).
+      - name: semana_iso
+        description: Número da semana ISO no ano.
 
   - name: fct_srag_diario
     description: >
@@ -47,15 +57,51 @@ models:
                 to: ref('dim_uf')
                 field: uf
       - name: casos
-        description: Total de casos no dia/UF.
+        description: Total de casos (notificações) no dia/UF.
         data_tests: [not_null]
+      - name: curas
+        description: Casos com desfecho cura (EVOLUCAO=1).
+      - name: obitos
+        description: Óbitos por SRAG (EVOLUCAO=2) — numerador da mortalidade.
+      - name: obitos_outras_causas
+        description: Óbitos por outras causas (EVOLUCAO=3).
+      - name: casos_uti
+        description: Casos que foram à UTI (UTI=1) — numerador do proxy de UTI.
+      - name: casos_uti_nao
+        description: Casos sem UTI (UTI=2) — compõe o denominador do proxy de UTI.
+      - name: vacinados
+        description: Casos vacinados p/ COVID (VACINA_COV=1) — numerador do proxy de vacinação.
+      - name: nao_vacinados
+        description: Casos não vacinados (VACINA_COV=2) — compõe o denominador do proxy.
 
   - name: gold_mart_srag_diario
     description: >
       View de serviço (contrato do backend/Grafana): fato denormalizado com dim_uf.
-      Mantém os nomes de coluna esperados pela camada de tools.
+      Mantém os nomes de coluna esperados pela camada de tools (ev_*, uti_*, vac_*).
     columns:
       - name: dt
+        description: Data do 1º sintoma.
         data_tests: [not_null]
       - name: uf
+        description: Sigla da UF.
         data_tests: [not_null]
+      - name: uf_nome
+        description: Nome por extenso da UF (de dim_uf).
+      - name: regiao
+        description: Região geográfica (de dim_uf).
+      - name: casos
+        description: Total de casos no dia/UF.
+      - name: ev_cura
+        description: Curas (alias de fct.curas).
+      - name: ev_obito
+        description: Óbitos por SRAG (alias de fct.obitos).
+      - name: ev_obito_outras
+        description: Óbitos por outras causas (alias de fct.obitos_outras_causas).
+      - name: uti_sim
+        description: Casos com UTI (alias de fct.casos_uti).
+      - name: uti_nao
+        description: Casos sem UTI (alias de fct.casos_uti_nao).
+      - name: vac_sim
+        description: Vacinados (alias de fct.vacinados).
+      - name: vac_nao
+        description: Não vacinados (alias de fct.nao_vacinados).

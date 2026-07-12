@@ -25,3 +25,14 @@ jobs:
         run: bandit -r src -q
       - name: Testes + cobertura (pytest, meta 85%)
         run: pytest
+
+  dados:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dados/dbt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Lint SQL (sqlfluff)
+        run: uvx sqlfluff lint models tests
