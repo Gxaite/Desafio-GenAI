@@ -8,7 +8,7 @@ from __future__ import annotations
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse
 
-from srag_report.api.landing import PAGINA
+from srag_report.api.landing import GRAFO, PAGINA
 from srag_report.application.orchestration import construir_grafo
 from srag_report.application.relatorio import gerar_relatorio_pdf
 from srag_report.application.tools import calcular_metricas
@@ -55,12 +55,14 @@ def metricas() -> list[Metrica]:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
-@app.get("/agente/grafo", response_class=Response)
-def agente_grafo() -> Response:
-    """Diagrama do grafo do agente (Mermaid) — visualização do fluxo de orquestração."""
-    repo, fonte, llm, _aud, _rend = montar_dependencias()
-    mermaid = construir_grafo(repo, fonte, llm).get_graph().draw_mermaid()
-    return Response(content=mermaid, media_type="text/plain; charset=utf-8")
+@app.get("/agente/grafo", include_in_schema=False)
+def agente_grafo(format: str = "html") -> Response:
+    """Fluxo do agente: página HTML (default) ou a fonte Mermaid (?format=mermaid)."""
+    if format == "mermaid":
+        repo, fonte, llm, _aud, _rend = montar_dependencias()
+        mermaid = construir_grafo(repo, fonte, llm).get_graph().draw_mermaid()
+        return Response(content=mermaid, media_type="text/plain; charset=utf-8")
+    return HTMLResponse(GRAFO)
 
 
 @app.get("/auditoria/execucoes")
