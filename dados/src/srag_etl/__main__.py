@@ -34,7 +34,7 @@ def main() -> None:
     raw_dir = settings.srag_raw_dir
     log.info("etl.start", raw_dir=raw_dir, destino=settings.postgres_db)
 
-    resultado = carregar_bronze(settings.database_url, raw_dir)
+    resultado = carregar_bronze(settings.database_url, raw_dir, settings.csv_urls)
     registrar_execucao(settings.database_url, resultado)
     log.info("el.done", linhas_lidas=resultado.linhas_lidas, arquivos=resultado.arquivos)
 

@@ -8,11 +8,17 @@ métricas — minimização na ingestão; nenhum dos 194 campos de microdado al�
 from __future__ import annotations
 
 import csv
+import shutil
+import tempfile
+import urllib.request
 from dataclasses import dataclass
 from glob import glob
 from pathlib import Path
 
 import psycopg
+import structlog
+
+log = structlog.get_logger()
 
 # Colunas lidas do CSV (das 194) e a ordem da tabela bronze.
 _COLUNAS_FONTE = ["NU_NOTIFIC", "DT_SIN_PRI", "SG_UF", "EVOLUCAO", "UTI", "VACINA_COV"]
@@ -46,11 +52,13 @@ class ResultadoEL:
     arquivos: list[str]
 
 
-def carregar_bronze(database_url: str, raw_dir: str) -> ResultadoEL:
-    """Trunca e recarrega `bronze.srag_raw` a partir de `raw_dir/srag-*.csv` (idempotente)."""
-    arquivos = sorted(glob(f"{raw_dir}/srag-*.csv"))
-    if not arquivos:
-        raise FileNotFoundError(f"nenhum CSV encontrado em {raw_dir}/srag-*.csv")
+def carregar_bronze(database_url: str, raw_dir: str, urls: list[str] | None = None) -> ResultadoEL:
+    """Trunca e recarrega `bronze.srag_raw` (idempotente).
+
+    Fonte: usa os CSVs locais em `raw_dir/srag-*.csv` se existirem; senão baixa das `urls`
+    (Open DATASUS / S3 público) — reprodutível no clone, sem o arquivo grande no repositório.
+    """
+    arquivos = _resolver_arquivos(raw_dir, urls or [])
 
     cols = ", ".join(_COLUNAS_BRONZE)
     linhas = 0
@@ -82,7 +90,33 @@ def registrar_execucao(database_url: str, resultado: ResultadoEL) -> None:
         conn.commit()
 
 
-def _indices_colunas(arquivo: str) -> list[int]:
+def _resolver_arquivos(raw_dir: str, urls: list[str]) -> list[Path]:
+    """CSVs locais se existirem; senão baixa das URLs para um diretório temporário."""
+    locais = sorted(glob(f"{raw_dir}/srag-*.csv"))
+    if locais:
+        log.info("el.fonte", modo="local", arquivos=len(locais))
+        return [Path(p) for p in locais]
+    if not urls:
+        raise FileNotFoundError(f"sem CSV em {raw_dir}/srag-*.csv e sem SRAG_CSV_URLS")
+    destino = Path(tempfile.mkdtemp(prefix="srag-raw-"))
+    baixados: list[Path] = []
+    for url in urls:
+        alvo = destino / url.rsplit("/", 1)[-1]
+        log.info("el.download", url=url, destino=str(alvo))
+        _baixar(url, alvo)
+        baixados.append(alvo)
+    log.info("el.fonte", modo="download", arquivos=len(baixados))
+    return baixados
+
+
+def _baixar(url: str, destino: Path) -> None:
+    """Baixa um arquivo grande em streaming (sem carregar tudo na memória)."""
+    req = urllib.request.Request(url, headers={"User-Agent": "srag-etl"})
+    with urllib.request.urlopen(req, timeout=120) as resp, open(destino, "wb") as fh:
+        shutil.copyfileobj(resp, fh, length=1024 * 1024)
+
+
+def _indices_colunas(arquivo: Path) -> list[int]:
     """Mapeia as colunas de interesse para seus índices no cabeçalho do CSV."""
     with open(arquivo, encoding="utf-8", newline="") as fh:
         cabecalho = next(csv.reader(fh, delimiter=";", quotechar='"'))
