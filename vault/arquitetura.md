@@ -31,8 +31,8 @@ deriva desta visão e é entregue em PDF.
 
 - **Hexagonal (Ports & Adapters)** — o domínio não conhece frameworks. LangGraph, Postgres,
   NewsAPI e OpenRouter são *adapters* plugados em *ports* (Protocols).
-- **SOLID (SRP + DIP)** — um arquivo, uma razão para mudar; camadas de cima dependem de
-  abstrações, nunca de SDKs concretos.
+- **SOLID** — os 5 princípios mapeados ao código real (com trade-offs) em [[principios-solid]]:
+  SRP nos módulos, DIP via *ports*, OCP/ISP nos adapters — imposto no CI pelo import-linter.
 - **Domínio puro e determinístico** — regras de negócio ([[metricas]]) são funções puras, sem
   I/O nem estado global, testáveis sem mocks pesados.
 - **12-Factor** — config e segredos por ambiente (`.env`), injetados no composition root (`cli.py`).

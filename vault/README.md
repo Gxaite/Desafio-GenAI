@@ -9,6 +9,7 @@ serve de trilha de auditoria e alimenta o README do repositório. Requisitos do 
   projeto, containerização e stack.
 - [[qualidade-governanca]] — governança/auditoria, guardrails, dados sensíveis (LGPD),
   observabilidade, resiliência, erros e tooling.
+- [[principios-solid]] — os 5 princípios SOLID mapeados ao código, com trade-offs.
 
 ## Camadas
 - [[camada-dados]] — ETL do CSV DATASUS → marts no Postgres.
