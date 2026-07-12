@@ -143,8 +143,11 @@ valores conhecidos (1 ou 2). Gráficos: casos diários (30 dias) e casos mensais
   das tools), filtro de relevância das notícias, validação de saída e falha explícita ou `N/A`.
 - **Dados sensíveis (LGPD):** minimização (só as colunas necessárias entram no bronze) e apenas
   agregados são servidos (camada gold); nenhum dado a nível de indivíduo sai do banco.
-- **Resiliência:** timeouts, retry com backoff e degradação graciosa. O relatório sai mesmo sem
-  notícias ou com o LLM indisponível, via narrativa determinística.
+- **Resiliência (fail-fast, sem fallback):** timeouts e retry com backoff em erros transitórios;
+  esgotados os retries, a falha sobe como erro tipado e a API responde **503** (ou emite evento
+  de erro no stream). Não há relatório silenciosamente degradado: se dados, notícias ou LLM
+  falharem, a execução falha explicitamente, em vez de entregar um relatório que aparente estar
+  completo. Ver [`adr-0010`](vault/decisoes/adr-0010-resiliencia.md).
 
 ## Qualidade
 

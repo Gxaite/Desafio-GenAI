@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from datetime import date
 
+import pytest
+
 from srag_report.application.orchestration import construir_grafo, executar
-from srag_report.domain.errors import ErroModeloLLM
+from srag_report.domain.errors import ErroFonteNoticias, ErroModeloLLM
 from srag_report.domain.models import AgregadoSRAG, Noticia, Periodo, PontoSerie
 
 REF = date(2026, 7, 5)
@@ -43,6 +45,11 @@ class _LLMQuebrado:
         raise ErroModeloLLM("indisponível")
 
 
+class _FonteQuebrada:
+    def buscar(self, consulta: str, *, limite: int = 5) -> list[Noticia]:
+        raise ErroFonteNoticias("indisponível")
+
+
 def test_grafo_produz_relatorio_completo() -> None:
     grafo = construir_grafo(_FakeRepo(), _FakeFonte(), _FakeLLM())
     estado = executar(grafo)
@@ -55,10 +62,15 @@ def test_grafo_produz_relatorio_completo() -> None:
     assert estado["run_id"]
 
 
-def test_grafo_degrada_quando_llm_falha() -> None:
+def test_grafo_propaga_erro_quando_llm_falha() -> None:
+    """Sem fallback: falha do LLM sobe como erro, não vira narrativa determinística."""
     grafo = construir_grafo(_FakeRepo(), _FakeFonte(), _LLMQuebrado())
-    estado = executar(grafo)
+    with pytest.raises(ErroModeloLLM):
+        executar(grafo)
 
-    assert "Narrativa automática" in (estado["narrativa"] or "")
-    tipos = {e.no: e.tipo for e in estado["trilha"]}
-    assert tipos["narrativa"] == "fallback"
+
+def test_grafo_propaga_erro_quando_noticias_falham() -> None:
+    """Sem fallback: falha da fonte de notícias sobe como erro, não vira lista vazia."""
+    grafo = construir_grafo(_FakeRepo(), _FonteQuebrada(), _FakeLLM())
+    with pytest.raises(ErroFonteNoticias):
+        executar(grafo)

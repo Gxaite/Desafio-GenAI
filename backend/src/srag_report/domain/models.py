@@ -69,7 +69,7 @@ class EventoAuditoria(BaseModel):
     """Um evento da trilha de auditoria do agente (uma linha por passo)."""
 
     no: str
-    tipo: str  # tool | llm | fallback | decisao
+    tipo: str  # tool | llm | decisao
     detalhe: str
     ts: datetime
     duracao_ms: int | None = None

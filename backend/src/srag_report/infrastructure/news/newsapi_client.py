@@ -1,8 +1,8 @@
 """Adapter da NewsAPI para o port FonteNoticias.
 
 Resiliência (vault/qualidade-governanca.md): timeout por chamada, retry com backoff só em
-erros transitórios (rede, 429, 5xx). Falha permanente vira ErroFonteNoticias na fronteira;
-sem chave configurada, degrada para lista vazia.
+erros transitórios (rede, 429, 5xx). Qualquer falha (permanente ou chave ausente) vira
+ErroFonteNoticias na fronteira e sobe — sem degradar para lista vazia (adr-0010).
 """
 
 from __future__ import annotations
@@ -12,13 +12,10 @@ from datetime import date
 from typing import Any
 
 import httpx
-import structlog
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from srag_report.domain.errors import ErroFonteNoticias
 from srag_report.domain.models import Noticia
-
-log = structlog.get_logger()
 
 _STATUS_TRANSITORIOS = {429, 500, 502, 503, 504}
 
@@ -48,8 +45,7 @@ class NewsApiFonteNoticias:
 
     def buscar(self, consulta: str, *, limite: int = 5) -> list[Noticia]:
         if not self._api_key:
-            log.warning("noticias.sem_chave", msg="NEWSAPI_KEY ausente — degradando p/ []")
-            return []
+            raise ErroFonteNoticias("NEWSAPI_KEY ausente")
         try:
             dados = self._fetch(consulta, limite)
         except httpx.HTTPError as exc:  # fronteira: SDK → erro de domínio

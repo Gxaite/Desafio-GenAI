@@ -1,7 +1,8 @@
 """Grafo LangGraph do agente (linear, MVP) e o runner.
 
 Fluxo: métricas → gráficos → notícias → narrativa. Cada nó é um ponto de auditoria
-(adr-0005). Degradação graciosa: notícias/LLM podem falhar sem derrubar o relatório.
+(adr-0005). Sem fallback: se qualquer nó falhar (dados, notícias ou LLM), o erro sobe e
+a execução falha explicitamente — nada de relatório silenciosamente degradado (adr-0010).
 """
 
 from __future__ import annotations
@@ -15,7 +16,6 @@ from langgraph.graph import END, START, StateGraph
 from srag_report.application import narrativa as narr
 from srag_report.application.orchestration.state import EstadoRelatorio
 from srag_report.application.tools import buscar_noticias, calcular_metricas, dados_grafico
-from srag_report.domain.errors import ErroFonteNoticias, ErroGuardrail, ErroModeloLLM
 from srag_report.domain.models import EventoAuditoria
 from srag_report.domain.ports import FonteNoticias, ModeloLLM, RepositorioDados
 
@@ -51,27 +51,19 @@ class _Nos:
 
     def noticias(self, estado: EstadoRelatorio) -> EstadoRelatorio:
         t0 = datetime.now(UTC)
-        try:
-            ns = buscar_noticias(self._fonte)
-            return {"noticias": ns,
-                    "trilha": [_evento("noticias", "tool", f"{len(ns)} relevantes", t0)]}
-        except ErroFonteNoticias as exc:  # degrada: relatório sai sem notícias
-            return {"noticias": [],
-                    "trilha": [_evento("noticias", "fallback", str(exc), t0)]}
+        ns = buscar_noticias(self._fonte)  # ErroFonteNoticias sobe e falha a execução
+        return {"noticias": ns,
+                "trilha": [_evento("noticias", "tool", f"{len(ns)} relevantes", t0)]}
 
     def narrativa(self, estado: EstadoRelatorio) -> EstadoRelatorio:
         t0 = datetime.now(UTC)
         metricas = estado.get("metricas") or []
         noticias = estado.get("noticias") or []
         system, user = narr.montar_prompt(metricas, noticias, estado.get("referencia"))
-        try:
-            texto = narr.validar_narrativa(self._llm.completar(system, user))
-            return {"narrativa": texto,
-                    "trilha": [_evento("narrativa", "llm", f"{len(texto)} caracteres", t0)]}
-        except (ErroModeloLLM, ErroGuardrail) as exc:  # degrada: narrativa determinística
-            texto = narr.narrativa_fallback(metricas, estado.get("referencia"))
-            return {"narrativa": texto,
-                    "trilha": [_evento("narrativa", "fallback", str(exc), t0)]}
+        # ErroModeloLLM/ErroGuardrail sobem e falham a execução — sem narrativa determinística
+        texto = narr.validar_narrativa(self._llm.completar(system, user))
+        return {"narrativa": texto,
+                "trilha": [_evento("narrativa", "llm", f"{len(texto)} caracteres", t0)]}
 
 
 def construir_grafo(repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM) -> Any:

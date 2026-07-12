@@ -1,4 +1,4 @@
-"""Casos de borda: virada de ano, mart vazio e degradação sem notícias."""
+"""Casos de borda: virada de ano, mart vazio e falha explícita da fonte de notícias."""
 
 from __future__ import annotations
 
@@ -66,8 +66,7 @@ class _LLM:
         return "ok"
 
 
-def test_agente_degrada_sem_noticias() -> None:
-    estado = executar(construir_grafo(_Repo(), _FonteQuebrada(), _LLM()))
-    assert estado["noticias"] == []
-    tipos = {e.no: e.tipo for e in estado["trilha"]}
-    assert tipos["noticias"] == "fallback"
+def test_agente_falha_quando_noticias_indisponiveis() -> None:
+    """Sem fallback: fonte de notícias fora do ar falha a execução, não gera relatório vazio."""
+    with pytest.raises(ErroFonteNoticias):
+        executar(construir_grafo(_Repo(), _FonteQuebrada(), _LLM()))

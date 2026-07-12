@@ -52,8 +52,10 @@ def test_adapter_parseia_artigos() -> None:
     assert ns[0].publicado_em == date(2026, 7, 1)
 
 
-def test_adapter_sem_chave_degrada_para_vazio() -> None:
-    assert NewsApiFonteNoticias("").buscar("SRAG") == []
+def test_adapter_sem_chave_falha_explicitamente() -> None:
+    """Sem fallback: chave ausente vira ErroFonteNoticias, não lista vazia silenciosa."""
+    with pytest.raises(ErroFonteNoticias):
+        NewsApiFonteNoticias("").buscar("SRAG")
 
 
 def test_adapter_erro_transitorio_vira_erro_dominio() -> None:

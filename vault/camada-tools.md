@@ -33,8 +33,8 @@ As tools vivem em `application/tools.py` e compõem *ports* + domínio puro — 
   e aplica `domain/news.filtrar_relevantes` (guardrail) antes de devolver `Noticia(titulo,
   fonte, url, publicado_em, descricao)`.
 - **Decisão:** o **filtro de relevância** é função pura e testável, separada do I/O; sem chave
-  ou em falha transitória, o adapter degrada para `[]` (o relatório sai mesmo sem notícias —
-  [[qualidade-governanca]]).
+  ou em falha permanente, o adapter levanta `ErroFonteNoticias` e a execução falha explícita
+  (fail-fast, sem fallback — [[adr-0010-resiliencia]]).
 
 ## Princípios
 - Tools **não alucinam**: retornam dado de fonte (validado por schema pydantic) ou erro tipado.

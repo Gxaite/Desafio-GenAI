@@ -1,4 +1,4 @@
-"""Testes da narrativa: prompt com grounding, validação (guardrail) e fallback."""
+"""Testes da narrativa: prompt com grounding e validação (guardrail de saída)."""
 
 from __future__ import annotations
 
@@ -40,9 +40,3 @@ def test_validar_narrativa_strip_e_vazia() -> None:
     assert n.validar_narrativa("  texto  ") == "texto"
     with pytest.raises(ErroGuardrail):
         n.validar_narrativa("   ")
-
-
-def test_fallback_com_e_sem_metricas() -> None:
-    com = n.narrativa_fallback([_m("Taxa de mortalidade", 5.0)], date(2026, 7, 5))
-    assert "5.0%" in com and "2026-07-05" in com
-    assert "sem métricas" in n.narrativa_fallback([], None)

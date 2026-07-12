@@ -10,7 +10,7 @@ Critério **"registro de decisões dos agentes"**. Cada execução gera uma **tr
 
 - `timestamp`, `no` (nó do grafo), `tipo` (decisão / tool_call / llm);
 - entrada, saída (ou resumo), modelo usado, duração;
-- erros e fallbacks.
+- erros (a execução falha explicitamente; não há fallback que os oculte).
 
 O grafo do [[agente-orquestrador]] favorece isso: cada nó é um ponto de log. Um `run_id`
 correlaciona toda a trilha de uma execução.
@@ -59,18 +59,17 @@ Injetada via ports/decorators, sem poluir o domínio. Dados sensíveis **nunca**
 
 ## Resiliência
 
-Toda borda externa (NewsAPI, LLM/OpenRouter, disco) pode falhar; o sistema **degrada com
-elegância** ([[adr-0010-resiliencia]]).
+Toda borda externa (NewsAPI, LLM/OpenRouter, disco) pode falhar; o sistema tenta se recuperar de
+falhas **transitórias** e, esgotadas as tentativas, **falha explicitamente** — sem fallback que
+mascare o problema ([[adr-0010-resiliencia]]).
 
 | Padrão | Onde | Como |
 |---|---|---|
 | **Timeout** | todo I/O externo | limite explícito por chamada; nunca esperar infinito |
 | **Retry + backoff com jitter** | NewsAPI, LLM | `tenacity`; só erros transitórios (5xx, timeout, rate-limit) |
-| **Circuit breaker** | NewsAPI, LLM | abre após N falhas; evita martelar serviço caído |
-| **Degradação graciosa** | orquestração | relatório sai **mesmo sem notícias**, sinalizando a ausência |
+| **Fail-fast (sem fallback)** | orquestração | erro tipado sobe; API responde 503 / evento de erro no stream — sem relatório degradado |
+| **Erros tipados na fronteira** | NewsAPI, LLM | SDK vira `SragReportError`; o domínio nunca vê exceção de infra |
 | **Idempotência** | ETL | mesma entrada → mesma saída; reprocessar é seguro |
-| **Bulkhead** | LLM/notícias | isolar falha de um recurso para não derrubar o pipeline |
-| **Fallback de modelo** | LLM | se o modelo primário falhar, cair para alternativa |
 
 Resiliência é responsabilidade da **infraestrutura**; o domínio permanece puro. I/O nas bordas é
 assíncrono ([[adr-0011-async-io]]).

@@ -333,8 +333,9 @@ GRAFO = """<!doctype html>
     <span class="cap">relatório</span>
   </div>
 
-  <p class="note">Notícias e LLM têm degradação graciosa: se falharem, o relatório sai mesmo
-     assim. Cada passo grava duração e resultado na trilha de auditoria.</p>
+  <p class="note">Sem fallback: se dados, notícias ou LLM falharem, a execução falha
+     explicitamente (erro), em vez de gerar um relatório degradado. Cada passo grava duração
+     e resultado na trilha de auditoria.</p>
   <p class="src">Fonte em Mermaid: <a href="/agente/grafo?format=mermaid">/agente/grafo?format=mermaid</a></p>
 </main>
 <footer>SRAG Relatórios · agente orquestrador em LangGraph</footer>

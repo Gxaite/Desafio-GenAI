@@ -1,7 +1,8 @@
 """Narrativa do relatório — prompt com grounding e validação (guardrails).
 
 O LLM recebe SOMENTE os números já calculados e as notícias já filtradas; é instruído a
-não inventar valores. Se algo falhar, há um fallback determinístico (o relatório sempre sai).
+não inventar valores. Se o LLM falhar ou a saída não passar no guardrail, o erro sobe e a
+execução falha explicitamente — sem narrativa determinística que mascare o problema (adr-0010).
 """
 
 from __future__ import annotations
@@ -43,17 +44,3 @@ def validar_narrativa(texto: str) -> str:
     if not limpo:
         raise ErroGuardrail("narrativa vazia retornada pelo LLM")
     return limpo
-
-
-def narrativa_fallback(metricas: list[Metrica], referencia: date | None) -> str:
-    """Narrativa determinística quando o LLM/guardrail falha (degradação graciosa)."""
-    partes = [
-        f"{m.nome.lower()} de {m.valor}{m.unidade}"
-        for m in metricas
-        if m.valor is not None
-    ]
-    resumo = "; ".join(partes) if partes else "sem métricas disponíveis"
-    return (
-        f"Nos últimos 30 dias (referência {referencia}): {resumo}. "
-        "Narrativa automática: contextualização por LLM indisponível nesta execução."
-    )
