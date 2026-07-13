@@ -208,6 +208,11 @@ UTI e vacinação são proxies explícitos, pois a base traz status por caso, n�
 cobertura populacional. A premissa é documentada no relatório e os denominadores usam apenas
 valores conhecidos (1 ou 2). Gráficos: casos diários (30 dias) e casos mensais (12 meses).
 
+📖 **Dicionário de dados:** [`docs/dicionario-de-dados.md`](docs/dicionario-de-dados.md) —
+campos de origem usados, esquema da camada gold que criamos e o que é o **N** de cada métrica.
+Fonte oficial: [Open DATASUS / SIVEP-Gripe](https://opendatasus.saude.gov.br) (dicionário e ficha
+em [`data/reference/`](data/reference)).
+
 <p align="center">
   <img src="docs/assets/relatorio.png" alt="Relatório de SRAG em PDF: as quatro métricas, os dois gráficos, a narrativa e as fontes consultadas" width="640">
   <br><sub><b>Relatório PDF</b> gerado pelo agente — as quatro métricas, os dois gráficos, a narrativa fundamentada e as fontes consultadas.</sub>
