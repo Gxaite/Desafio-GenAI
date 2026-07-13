@@ -83,7 +83,8 @@ PAGINA = """<!doctype html>
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
     box-shadow:var(--shadow)}
 
-  .grid4{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
   .kpi{padding:24px 20px;text-align:center;position:relative;overflow:hidden;
     transition:box-shadow .2s,transform .2s}
   .kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
@@ -134,9 +135,10 @@ PAGINA = """<!doctype html>
   .mapctl select{font:inherit;font-size:13px;color:var(--ink);background:var(--bg);
     border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
   .map svg{width:100%;height:auto;display:block}
-  #mapsvg path{fill:var(--soft);stroke:var(--panel);stroke-width:.3;cursor:pointer;transition:fill .2s}
-  #mapsvg path:hover{stroke:var(--ink);stroke-width:.6}
-  #mapsvg path.sel{stroke:var(--ink);stroke-width:.9}
+  #mapsvg path{fill:var(--soft);stroke:var(--panel);stroke-width:.7;vector-effect:non-scaling-stroke;
+    cursor:pointer;transition:fill .2s}
+  #mapsvg path:hover{stroke:var(--ink);stroke-width:1.4}
+  #mapsvg path.sel{stroke:var(--ink);stroke-width:2}
   .mapbins{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:8px;font-size:11px;color:var(--muted)}
   .mapbins .bin{display:inline-flex;align-items:center;gap:5px}
   .mapbins .bin i{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid var(--line)}
@@ -168,7 +170,7 @@ PAGINA = """<!doctype html>
     border-top:1px solid var(--line);margin-top:72px;line-height:1.7}
   .tech{margin-top:8px;color:var(--muted);font-size:12.5px}
 
-  @media(max-width:820px){.grid4{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:30px}
+  @media(max-width:820px){.grid4,.grid5{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:30px}
     .mapwrap{grid-template-columns:1fr}}
 </style>
 <script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tema')||'light')}catch(e){document.documentElement.setAttribute('data-theme','light')}</script>
@@ -233,7 +235,7 @@ PAGINA = """<!doctype html>
   </div>
 
   <div class="sec">Como o agente trabalha</div>
-  <div class="grid4">
+  <div class="grid5">
     <div class="card step" data-no="metricas"><div class="n">1</div><h3>Métricas</h3><p>Calcula as quatro taxas no banco, em SQL determinístico.</p><div class="sms"></div></div>
     <div class="card step" data-no="graficos"><div class="n">2</div><h3>Gráficos</h3><p>Séries de casos diários e mensais.</p><div class="sms"></div></div>
     <div class="card step" data-no="noticias"><div class="n">3</div><h3>Notícias</h3><p>Busca e filtra notícias em tempo real.</p><div class="sms"></div></div>
@@ -259,11 +261,10 @@ PAGINA = """<!doctype html>
   <div class="card panel">
     <div class="nfilters">
       <select id="fperiodo">
-        <option value="30">Últimos 30 dias</option>
-        <option value="90">Últimos 90 dias</option>
-        <option value="180">Últimos 6 meses</option>
-        <option value="365">Últimos 12 meses</option>
-        <option value="">Todo o histórico</option>
+        <option value="1">Último dia</option>
+        <option value="7">Últimos 7 dias</option>
+        <option value="14">Últimos 14 dias</option>
+        <option value="30" selected>Últimos 30 dias</option>
       </select>
       <select id="ffonte"><option value="">Todas as fontes</option></select>
     </div>
