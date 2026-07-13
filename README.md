@@ -13,6 +13,11 @@ dois gráficos e uma narrativa de contexto. Toda a solução roda em Docker.
 Contexto: PoC para a Indicium HealthCare Inc. avaliar uma solução que ajude profissionais de
 saúde a entender a severidade e o avanço de surtos de SRAG.
 
+<p align="center">
+  <img src="docs/assets/frontend.png" alt="Hub do sistema em localhost:8000: métricas ao vivo, geração de relatório e explorador de notícias" width="880">
+  <br><sub><b>Hub</b> em <code>localhost:8000</code> — métricas ao vivo, geração do relatório em tempo real e explorador de notícias (tema claro/escuro automático).</sub>
+</p>
+
 ## Sumário
 
 1. [Como rodar](#como-rodar)
@@ -68,6 +73,11 @@ Endpoints principais:
 | `GET /auditoria/execucoes` e `/{run_id}` | Execuções do agente e a trilha detalhada (tempos, fontes) |
 | `GET /health`, `/health/db` | Liveness e readiness |
 
+<p align="center">
+  <img src="docs/assets/grafana.png" alt="Dashboard SRAG no Grafana: KPIs, gauges de mortalidade/UTI/vacinação, séries diárias e por região" width="880">
+  <br><sub><b>Grafana</b> em <code>localhost:3000</code> — dashboard interativo provisionado como código, lendo a camada gold.</sub>
+</p>
+
 ## Arquitetura
 
 Princípio-guia: o LLM orquestra e explica, o Python calcula. Todas as métricas são SQL/Python
@@ -75,35 +85,55 @@ determinístico; o LLM apenas narra sobre números já apurados, sem alucinar. O
 segue **hexagonal (Ports & Adapters)** e os dados seguem **medallion** (bronze, silver, gold).
 
 ```mermaid
-flowchart TD
-    subgraph fontes["Fontes"]
-        CSV[("CSV Open DATASUS<br/>SIVEP-Gripe")]
-        NEWS[["NewsAPI<br/>tempo real"]]
-        LLM[["Claude via OpenRouter"]]
-    end
-    subgraph dados["Servico dados · ETL medallion (dbt)"]
-        BRONZE[("bronze<br/>landing bruto")]
-        SILVER[("silver<br/>limpo + dedup")]
-        GOLD[("gold<br/>star schema")]
-        CSV --> BRONZE --> SILVER --> GOLD
-    end
-    subgraph backend["Servico backend · Agente Orquestrador (LangGraph)"]
+flowchart TB
+    subgraph FONTES["🌐 &nbsp;Fontes de dados"]
         direction LR
-        T1["tool<br/>calcular_metricas"]
-        T2["tool<br/>dados_grafico"]
-        T3["tool<br/>buscar_noticias"]
-        NARR["no narrativa<br/>(LLM)"]
-        REL["montar relatorio<br/>Plotly + WeasyPrint"]
+        CSV[("📄 &nbsp;Open DATASUS<br/><b>SIVEP-Gripe · CSV</b>")]
+        NEWS["📰 &nbsp;NewsAPI<br/><b>notícias em tempo real</b>"]
+        LLM["🤖 &nbsp;Claude<br/><b>via OpenRouter</b>"]
+    end
+
+    subgraph ETL["🗄️ &nbsp;Serviço <b>dados</b> · ETL medallion (dbt)"]
+        direction LR
+        BRONZE[("🥉 &nbsp;<b>bronze</b><br/>landing bruto")]
+        SILVER[("🥈 &nbsp;<b>silver</b><br/>limpo · dedup · flags")]
+        GOLD[("🥇 &nbsp;<b>gold</b><br/>star schema servido")]
+        BRONZE --> SILVER --> GOLD
+    end
+
+    subgraph AGENTE["⚙️ &nbsp;Serviço <b>backend</b> · Agente Orquestrador (LangGraph)"]
+        direction LR
+        T1["🧮 &nbsp;calcular_metricas"]
+        T2["📈 &nbsp;dados_grafico"]
+        T3["🔎 &nbsp;buscar_noticias"]
+        NARR["✍️ &nbsp;narrativa<br/><i>LLM · grounded</i>"]
+        REL["📑 &nbsp;montar relatório<br/><i>Plotly + WeasyPrint</i>"]
         T1 --> T2 --> T3 --> NARR --> REL
     end
-    GOLD --> T1
-    GOLD --> T2
-    NEWS --> T3
-    LLM --> NARR
-    REL --> PDF[["Relatorio PDF"]]
-    GOLD --> GRAFANA[["Grafana"]]
-    AUDIT[("Auditoria<br/>trilha por run_id")]
-    backend -.registra.-> AUDIT
+
+    CSV ==> BRONZE
+    GOLD ==> T1 & T2
+    NEWS ==> T3
+    LLM ==> NARR
+    REL ==> PDF["📕 &nbsp;<b>Relatório PDF</b>"]
+    GOLD ==> GRAF["📊 &nbsp;<b>Grafana</b>"]
+    AGENTE -. "registra trilha" .-> AUD[("🧾 &nbsp;Auditoria<br/>por run_id")]
+
+    classDef src fill:#eef2ff,stroke:#6366f1,stroke-width:1.5px,color:#312e81;
+    classDef bronze fill:#f6e4d2,stroke:#b06f2f,stroke-width:1.5px,color:#5c3a13;
+    classDef silver fill:#e9ebef,stroke:#8a909c,stroke-width:1.5px,color:#33373f;
+    classDef gold fill:#fdf0c8,stroke:#c99a1f,stroke-width:1.5px,color:#6b5107;
+    classDef tool fill:#eef0ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81;
+    classDef out fill:#e7f6ee,stroke:#16a34a,stroke-width:1.5px,color:#0f5132;
+    classDef aud fill:#f4f4f7,stroke:#9aa3af,stroke-width:1.5px,color:#3a3f49;
+
+    class CSV,NEWS,LLM src;
+    class BRONZE bronze;
+    class SILVER silver;
+    class GOLD gold;
+    class T1,T2,T3,NARR,REL tool;
+    class PDF,GRAF out;
+    class AUD aud;
 ```
 
 Versão em PDF (entregável): [`docs/diagrama-conceitual.pdf`](docs/diagrama-conceitual.pdf),
@@ -136,6 +166,11 @@ Serviços em Docker:
 UTI e vacinação são proxies explícitos, pois a base traz status por caso, não leitos totais nem
 cobertura populacional. A premissa é documentada no relatório e os denominadores usam apenas
 valores conhecidos (1 ou 2). Gráficos: casos diários (30 dias) e casos mensais (12 meses).
+
+<p align="center">
+  <img src="docs/assets/relatorio.png" alt="Relatório de SRAG em PDF: as quatro métricas, os dois gráficos, a narrativa e as fontes consultadas" width="640">
+  <br><sub><b>Relatório PDF</b> gerado pelo agente — as quatro métricas, os dois gráficos, a narrativa fundamentada e as fontes consultadas.</sub>
+</p>
 
 ## Governança, guardrails e dados sensíveis
 
@@ -173,6 +208,11 @@ docker compose --profile quality up -d sonar-db sonarqube   # http://localhost:9
 cd backend && uv run --extra dev pytest                     # gera coverage.xml
 SONAR_TOKEN=<token> docker compose --profile quality run --rm sonar-scanner
 ```
+
+<p align="center">
+  <img src="docs/assets/sonarqube.png" alt="SonarQube (Overall Code): 0 bugs, 0 vulnerabilidades, 0 security hotspots, ratings A, 82,3% de cobertura e 0% de duplicação" width="880">
+  <br><sub><b>SonarQube</b> em <code>localhost:9000</code> — 0 bugs, 0 vulnerabilidades, 0 hotspots, ratings A e 0% de duplicação (visão <i>Overall Code</i>).</sub>
+</p>
 
 Última análise: cobertura 99,4%, 0 bugs, 0 vulnerabilidades, 0 hotspots, 0% duplicação. Os
 adapters de I/O ficam fora da métrica de cobertura (são cobertos por testes de integração).
