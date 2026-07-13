@@ -18,4 +18,6 @@ class EstadoRelatorio(TypedDict, total=False):
     series: SeriesGraficos | None
     noticias: list[Noticia] | None
     narrativa: str | None
+    avaliacao: str | None
     trilha: Annotated[list[EventoAuditoria], operator.add]
+

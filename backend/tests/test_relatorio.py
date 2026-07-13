@@ -62,11 +62,16 @@ class _Aud:
 
     def registrar(self, run_id: str, referencia: date | None,
                   eventos: list[EventoAuditoria], metricas: list[Metrica],
-                  noticias: list[Noticia]) -> None:
+                  noticias: list[Noticia], narrativa: str = "",
+                  avaliacao: str = "", modelo: str = "", provedor: str = "",
+                  tokens: int = 0) -> None:
         self.run_id = run_id
         self.n_eventos = len(eventos)
         self.n_metricas = len(metricas)
         self.n_noticias = len(noticias)
+        self.narrativa = narrativa
+        self.avaliacao = avaliacao
+        self.tokens = tokens
 
 
 def test_gera_pdf_monta_dados_e_audita() -> None:
@@ -78,8 +83,9 @@ def test_gera_pdf_monta_dados_e_audita() -> None:
     assert rend.recebido.modelo == "modelo-x"
     assert len(rend.recebido.metricas) == 4
     assert rend.recebido.narrativa == "Narrativa gerada."
+    assert rend.recebido.avaliacao == "Narrativa gerada."
     assert aud.run_id == estado["run_id"]
-    assert aud.n_eventos == 4
+    assert aud.n_eventos == 5
     assert aud.n_metricas == 4
     assert aud.n_noticias == 1
 
@@ -93,6 +99,6 @@ def test_gera_pdf_sem_auditoria() -> None:
 def test_stream_emite_eventos_por_no_e_pdf_no_fim() -> None:
     eventos = list(gerar_relatorio_stream(_Repo(), _Fonte(), _LLM(), "m", _Render()))
     passos = [e["no"] for e in eventos if e["tipo"] == "evento"]
-    assert passos == ["metricas", "graficos", "noticias", "narrativa"]
+    assert passos == ["metricas", "graficos", "noticias", "narrativa", "avaliacao"]
     fim = eventos[-1]
     assert fim["tipo"] == "fim" and fim["run_id"] and fim["pdf_b64"]

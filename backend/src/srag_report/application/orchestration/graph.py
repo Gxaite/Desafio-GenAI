@@ -13,6 +13,7 @@ from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
+from srag_report.application import avaliacao as aval
 from srag_report.application import narrativa as narr
 from srag_report.application.orchestration.state import EstadoRelatorio
 from srag_report.application.tools import (
@@ -60,7 +61,7 @@ class _Nos:
         detalhe = f"{len(series.diaria_30d)} dias, {len(series.mensal_12m)} meses"
         return {"series": series, "trilha": [_evento("graficos", "tool", detalhe, t0)]}
 
-    def noticias(self, estado: EstadoRelatorio) -> EstadoRelatorio:
+    def noticias(self, _estado: EstadoRelatorio) -> EstadoRelatorio:
         t0 = datetime.now(UTC)
         ns = buscar_noticias(self._fonte)  # ErroFonteNoticias sobe e falha a execução
         return {"noticias": ns,
@@ -76,6 +77,18 @@ class _Nos:
         return {"narrativa": texto,
                 "trilha": [_evento("narrativa", "llm", f"{len(texto)} caracteres", t0)]}
 
+    def avaliacao(self, estado: EstadoRelatorio) -> EstadoRelatorio:
+        t0 = datetime.now(UTC)
+        metricas = estado.get("metricas") or []
+        noticias = estado.get("noticias") or []
+        narrativa = estado.get("narrativa") or ""
+        system, user = aval.montar_prompt_avaliacao(
+            metricas, noticias, narrativa, estado.get("referencia")
+        )
+        texto = narr.validar_narrativa(self._llm.completar(system, user))
+        return {"avaliacao": texto,
+                "trilha": [_evento("avaliacao", "llm", f"{len(texto)} caracteres", t0)]}
+
 
 def construir_grafo(
     repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM, dias_provisorios: int = 0
@@ -87,11 +100,13 @@ def construir_grafo(
     g.add_node("graficos", nos.graficos)
     g.add_node("noticias", nos.noticias)
     g.add_node("narrativa", nos.narrativa)
+    g.add_node("avaliacao", nos.avaliacao)
     g.add_edge(START, "metricas")
     g.add_edge("metricas", "graficos")
     g.add_edge("graficos", "noticias")
     g.add_edge("noticias", "narrativa")
-    g.add_edge("narrativa", END)
+    g.add_edge("narrativa", "avaliacao")
+    g.add_edge("avaliacao", END)
     return g.compile()
 
 

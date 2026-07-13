@@ -33,6 +33,7 @@ _TEMPLATE = Template(
   .leitura { border-left: 3px solid #0f172a; padding: 2px 0 2px 12px; color: #1f2937; }
   .fontes { font-size: 10.5px; color: #475569; }
   .fontes .f { color: #94a3b8; }
+  .avaliacao { border-left: 3px solid #7c3aed; padding: 2px 0 2px 12px; color: #1f2937; font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; }
   .rodape { margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 8px;
             font-size: 9px; color: #94a3b8; }
 </style></head><body>
@@ -67,6 +68,11 @@ _TEMPLATE = Template(
   {% if noticias %}<div class="fontes">
     {% for n in noticias %}{{ n.titulo }} <span class="f">({{ n.fonte }})</span><br>{% endfor %}
   </div>{% else %}<div class="fontes">Nenhuma notícia relevante nesta execução.</div>{% endif %}
+
+  {% if avaliacao %}
+  <div class="lab">Avaliação do agente</div>
+  <div class="avaliacao">{{ avaliacao }}</div>
+  {% endif %}
 
   <div class="rodape">
     Fonte dos dados Open DATASUS (SIVEP-Gripe). Os dias mais recentes ainda estão incompletos e por

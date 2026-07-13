@@ -58,7 +58,9 @@ def test_grafo_produz_relatorio_completo() -> None:
     assert estado["series"] is not None and estado["series"].diaria_30d
     assert estado["noticias"] and estado["noticias"][0].fonte == "G1"
     assert estado["narrativa"] == "Narrativa do LLM sobre a situação de SRAG."
-    assert [e.no for e in estado["trilha"]] == ["metricas", "graficos", "noticias", "narrativa"]
+    assert [e.no for e in estado["trilha"]] == [
+        "metricas", "graficos", "noticias", "narrativa", "avaliacao",
+    ]
     assert estado["run_id"]
 
 

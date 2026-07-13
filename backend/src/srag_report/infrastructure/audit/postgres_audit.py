@@ -31,6 +31,11 @@ CREATE TABLE IF NOT EXISTS auditoria.agente_run (
     referencia   date,
     executado_em timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE auditoria.agente_run ADD COLUMN IF NOT EXISTS narrativa text;
+ALTER TABLE auditoria.agente_run ADD COLUMN IF NOT EXISTS avaliacao text;
+ALTER TABLE auditoria.agente_run ADD COLUMN IF NOT EXISTS modelo text;
+ALTER TABLE auditoria.agente_run ADD COLUMN IF NOT EXISTS provedor text;
+ALTER TABLE auditoria.agente_run ADD COLUMN IF NOT EXISTS tokens integer;
 
 CREATE TABLE IF NOT EXISTS auditoria.agente_evento (
     id      bigserial PRIMARY KEY,
@@ -75,14 +80,20 @@ class PostgresRepositorioAuditoria:
         eventos: list[EventoAuditoria],
         metricas: list[Metrica],
         noticias: list[Noticia],
+        narrativa: str = "",
+        avaliacao: str = "",
+        modelo: str = "",
+        provedor: str = "",
+        tokens: int = 0,
     ) -> None:
         try:
             with psycopg.connect(self._dsn, connect_timeout=5) as conn:
                 conn.execute(_DDL)
                 conn.execute(
-                    "INSERT INTO auditoria.agente_run (run_id, referencia) VALUES (%s, %s) "
-                    "ON CONFLICT (run_id) DO NOTHING",
-                    (run_id, referencia),
+                    "INSERT INTO auditoria.agente_run "
+                    "(run_id, referencia, narrativa, avaliacao, modelo, provedor, tokens) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (run_id) DO NOTHING",
+                    (run_id, referencia, narrativa, avaliacao, modelo, provedor, tokens),
                 )
                 with conn.cursor() as cur:
                     cur.executemany(

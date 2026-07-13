@@ -23,7 +23,8 @@ _SYSTEM = (
     "vírgula."
 )
 
-_MARKDOWN = re.compile(r"(?m)^\s*#+\s*|[*_`]+")
+_MD_TITULO = re.compile(r"(?m)^\s*#+\s*")  # marcadores de título no início de linha
+_MD_ENFASE = re.compile(r"[*_`]+")  # ênfase/código markdown
 
 
 def _fmt_metrica(m: Metrica) -> str:
@@ -46,7 +47,7 @@ def montar_prompt(
 
 def validar_narrativa(texto: str) -> str:
     """Guardrail de saída: remove marcação de markdown e rejeita narrativa vazia."""
-    limpo = _MARKDOWN.sub("", texto).strip()
+    limpo = _MD_ENFASE.sub("", _MD_TITULO.sub("", texto)).strip()
     if not limpo:
         raise ErroGuardrail("narrativa vazia retornada pelo LLM")
     return limpo

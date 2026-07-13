@@ -73,8 +73,13 @@ class RepositorioAuditoria(Protocol):
         eventos: list[EventoAuditoria],
         metricas: list[Metrica],
         noticias: list[Noticia],
+        narrativa: str = "",
+        avaliacao: str = "",
+        modelo: str = "",
+        provedor: str = "",
+        tokens: int = 0,
     ) -> None:
-        """Grava a execução (trilha + métricas + fontes). Não derruba o relatório se falhar."""
+        """Grava a execução (trilha, métricas, fontes, textos e uso do LLM). Não derruba se falhar."""  # noqa: E501
         ...
 
     def listar_execucoes(self, limite: int = 20) -> list[ResumoExecucao]:

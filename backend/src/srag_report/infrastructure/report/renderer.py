@@ -19,6 +19,7 @@ class RelatorioPdfRenderer:
             "referencia": dados.referencia,
             "metricas": dados.metricas,
             "narrativa": dados.narrativa,
+            "avaliacao": dados.avaliacao,
             "noticias": dados.noticias,
             "grafico_diario": grafico_diario,
             "grafico_mensal": grafico_mensal,

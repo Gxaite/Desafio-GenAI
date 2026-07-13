@@ -31,18 +31,23 @@ def _montar_dados(estado: EstadoRelatorio, modelo: str) -> DadosRelatorio:
         series=estado.get("series") or SeriesGraficos(diaria_30d=[], mensal_12m=[]),
         noticias=estado.get("noticias") or [],
         narrativa=estado.get("narrativa") or "",
+        avaliacao=estado.get("avaliacao") or "",
         run_id=estado.get("run_id") or "",
         modelo=modelo,
         gerado_em=datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
     )
 
 
-def _persistir(auditoria: RepositorioAuditoria | None, estado: EstadoRelatorio) -> None:
+def _persistir(
+    auditoria: RepositorioAuditoria | None, estado: EstadoRelatorio,
+    modelo: str = "", provedor: str = "", tokens: int = 0,
+) -> None:
     if auditoria is not None:  # governança — nunca bloqueia o relatório
         auditoria.registrar(
             estado.get("run_id") or "", estado.get("referencia"),
             estado.get("trilha") or [], estado.get("metricas") or [],
-            estado.get("noticias") or [],
+            estado.get("noticias") or [], estado.get("narrativa") or "",
+            estado.get("avaliacao") or "", modelo, provedor, tokens,
         )
 
 
@@ -57,7 +62,7 @@ def gerar_relatorio_pdf(
     dias_provisorios: int = 0,
 ) -> tuple[bytes, EstadoRelatorio]:
     estado = executar(construir_grafo(repo, fonte, llm, dias_provisorios), referencia)
-    _persistir(auditoria, estado)
+    _persistir(auditoria, estado, modelo, "OpenRouter", getattr(llm, "total_tokens", 0))
     return renderizador.renderizar(_montar_dados(estado, modelo)), estado
 
 
@@ -85,7 +90,7 @@ def gerar_relatorio_stream(
             emitidos += 1
             yield {"tipo": "evento", "no": ev.no, "passo": ev.tipo, "duracao_ms": ev.duracao_ms}
 
-    _persistir(auditoria, final)
+    _persistir(auditoria, final, modelo, "OpenRouter", getattr(llm, "total_tokens", 0))
     pdf = renderizador.renderizar(_montar_dados(final, modelo))
     yield {"tipo": "fim", "run_id": final.get("run_id") or "",
            "pdf_b64": base64.b64encode(pdf).decode("ascii")}

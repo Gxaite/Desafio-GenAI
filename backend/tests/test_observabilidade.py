@@ -46,7 +46,7 @@ class _LLM:
 
 def test_trilha_registra_duracao_por_no() -> None:
     estado = executar(construir_grafo(_Repo(), _Fonte(), _LLM()))
-    assert len(estado["trilha"]) == 4
+    assert len(estado["trilha"]) == 5
     for evento in estado["trilha"]:
         assert evento.duracao_ms is not None
         assert evento.duracao_ms >= 0

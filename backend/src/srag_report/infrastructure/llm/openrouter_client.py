@@ -32,6 +32,7 @@ class OpenRouterModeloLLM:
             max_retries=max_retries,
             temperature=0.2,
         )
+        self.total_tokens = 0  # acumula o uso de tokens das chamadas (observabilidade)
 
     def completar(self, system: str, user: str) -> str:
         try:
@@ -40,4 +41,6 @@ class OpenRouterModeloLLM:
             )
         except Exception as exc:  # fronteira: SDK → erro de domínio
             raise ErroModeloLLM(f"OpenRouter falhou: {exc}") from exc
+        uso = getattr(resposta, "usage_metadata", None) or {}
+        self.total_tokens += int(uso.get("total_tokens", 0) or 0)
         return str(resposta.content)

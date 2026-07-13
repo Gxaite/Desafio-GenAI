@@ -83,7 +83,7 @@ PAGINA = """<!doctype html>
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
     box-shadow:var(--shadow)}
 
-  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .grid4{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
   .kpi{padding:24px 20px;text-align:center;position:relative;overflow:hidden;
     transition:box-shadow .2s,transform .2s}
   .kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
@@ -238,6 +238,7 @@ PAGINA = """<!doctype html>
     <div class="card step" data-no="graficos"><div class="n">2</div><h3>Gráficos</h3><p>Séries de casos diários e mensais.</p><div class="sms"></div></div>
     <div class="card step" data-no="noticias"><div class="n">3</div><h3>Notícias</h3><p>Busca e filtra notícias em tempo real.</p><div class="sms"></div></div>
     <div class="card step" data-no="narrativa"><div class="n">4</div><h3>Narrativa</h3><p>O LLM contextualiza apenas os números apurados.</p><div class="sms"></div></div>
+    <div class="card step" data-no="avaliacao"><div class="n">5</div><h3>Avaliação</h3><p>O LLM gera uma avaliação técnica estruturada.</p><div class="sms"></div></div>
   </div>
 
   <div class="sec">Gerar relatório do sistema</div>
@@ -327,7 +328,7 @@ async function execucao(){
       : '<span class="s">sem notícias nesta execução</span>';
   }catch{ $('#thead').textContent='trilha indisponível'; }
 }
-const ORDEM=['metricas','graficos','noticias','narrativa'];
+const ORDEM=['metricas','graficos','noticias','narrativa','avaliacao'];
 function resetSteps(){ document.querySelectorAll('.step').forEach(s=>{s.classList.remove('run','done');s.querySelector('.sms').textContent='';}); }
 function passoRun(no){ const s=document.querySelector('.step[data-no="'+no+'"]'); if(s) s.classList.add('run'); }
 function passoDone(no,ms){ const s=document.querySelector('.step[data-no="'+no+'"]'); if(s){ s.classList.remove('run'); s.classList.add('done'); s.querySelector('.sms').textContent=ms+' ms'; } }

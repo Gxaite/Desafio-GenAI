@@ -132,6 +132,7 @@ class DadosRelatorio(BaseModel):
     series: SeriesGraficos
     noticias: list[Noticia]
     narrativa: str
+    avaliacao: str = ""
     run_id: str
     modelo: str
     gerado_em: str
