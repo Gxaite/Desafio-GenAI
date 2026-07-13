@@ -20,13 +20,32 @@ saúde a entender a severidade e o avanço de surtos de SRAG.
 
 ## Sumário
 
-1. [Como rodar](#como-rodar)
-2. [Interfaces](#interfaces)
-3. [Arquitetura](#arquitetura)
-4. [Métricas e gráficos](#métricas-e-gráficos)
-5. [Governança, guardrails e dados sensíveis](#governança-guardrails-e-dados-sensíveis)
-6. [Qualidade](#qualidade)
-7. [Stack e documentação](#stack-e-documentação)
+1. [Cobertura dos requisitos](#cobertura-dos-requisitos)
+2. [Como rodar](#como-rodar)
+3. [Interfaces](#interfaces)
+4. [Arquitetura](#arquitetura)
+5. [Métricas e gráficos](#métricas-e-gráficos)
+6. [Governança, guardrails e dados sensíveis](#governança-guardrails-e-dados-sensíveis)
+7. [Qualidade](#qualidade)
+8. [Stack e documentação](#stack-e-documentação)
+
+## Cobertura dos requisitos
+
+Onde cada exigência e critério de avaliação está no projeto — código, tela ao vivo e o print
+correspondente neste README.
+
+| Requisito / critério | Onde está | Print |
+|---|---|---|
+| Integração Open DATASUS | ETL `dados/src/srag_etl/` → camada `bronze/`; baixa o CSV real do SIVEP-Gripe | [dbt docs](#arquitetura) |
+| Arquitetura · Agente Orquestrador | `backend/src/srag_report/application/orchestration/` (LangGraph); [grafo ao vivo](http://localhost:8000/agente/grafo) | [diagrama](#arquitetura) · [grafo](#arquitetura) |
+| Uso de Tools | `application/tools.py` — `calcular_metricas`, `dados_grafico`, `buscar_noticias` | [grafo](#arquitetura) |
+| Métricas (as 4) | `domain/metrics.py`; [`/metricas`](http://localhost:8000/metricas) | [relatório](#métricas-e-gráficos) · [hub](#desafio-genai--relatório-automatizado-de-srag) |
+| Gráficos (30d e 12m) | `infrastructure/report/charts.py` | [relatório](#métricas-e-gráficos) |
+| Guardrails | `narrativa.py`, `domain/news.py`, `domain/models.py`, `domain/errors.py` | [diagrama](#governança-guardrails-e-dados-sensíveis) |
+| Governança e transparência | `infrastructure/audit/`; [`/auditoria/execucoes`](http://localhost:8000/auditoria/execucoes) | [trilha](#governança-guardrails-e-dados-sensíveis) |
+| Tratamento de dados sensíveis | minimização no `bronze`; só a `gold` agregada é servida | — |
+| Clean Code | `ruff` · `mypy --strict` · `bandit` · `import-linter` · CI · SonarQube | [SonarQube](#qualidade) |
+| Documentação (processo de dados) | `dbt docs` gerado dos `.yml` em `bronze/silver/gold/` | [dbt docs](#arquitetura) |
 
 ## Como rodar
 
@@ -158,6 +177,23 @@ Serviços em Docker:
 | `dados` | Job de ETL: EL em Python (bronze) e **dbt** — uma pasta por camada (`bronze/`, `silver/`, `gold/`), star schema na gold, com testes de dados |
 | `backend` | FastAPI, agente LangGraph, tools e geração do PDF |
 | `grafana` | Dashboard interativo (lê a gold) |
+
+### Documentação do ETL (dbt docs)
+
+Cada model das camadas `bronze/`, `silver/` e `gold/` é documentado nos próprios arquivos
+`.yml` (descrição de tabelas e colunas, testes), e esses docs viram comentários no Postgres
+(`persist_docs`). O dbt gera um site navegável com **lineage** a partir daí:
+
+```bash
+cd dados/dbt
+dbt docs generate     # lê os .yml + introspecta o Postgres
+dbt docs serve        # abre em http://localhost:8080
+```
+
+<p align="center">
+  <img src="docs/assets/dbt-docs.png" alt="dbt docs: árvore bronze/silver/gold, descrição e colunas do model gold_mart_srag_diario e o lineage até o relatório PDF e o Grafana" width="900">
+  <br><sub><b>dbt docs</b> — documentação automática das camadas (descrições, colunas, testes) e o <i>lineage</i> completo, do dado bruto até o relatório e o dashboard (via <code>exposures</code>).</sub>
+</p>
 
 ## Métricas e gráficos
 

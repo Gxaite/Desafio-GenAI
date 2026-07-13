@@ -94,6 +94,8 @@ PAGINA = """<!doctype html>
   .kpi .v{font-size:32px;font-weight:800;letter-spacing:-.025em;margin-top:10px;
     font-variant-numeric:tabular-nums;color:var(--ink)}
   .kpi .c{font-size:12px;color:var(--faint);margin-top:4px}
+  .kpi .obs{font-size:10.5px;color:var(--faint);margin-top:10px;line-height:1.4;
+    padding-top:10px;border-top:1px solid var(--line)}
 
   .step{padding:22px 18px;text-align:center;transition:box-shadow .2s,border-color .2s}
   .step .n{width:36px;height:36px;border-radius:11px;background:var(--accent-weak);color:var(--accent);
@@ -249,7 +251,8 @@ async function kpis(){
     $('#kpis').innerHTML = ms.map(m=>`<div class="card kpi" style="--c:${cor(m.nome)}">
       <div class="l">${m.nome}</div>
       <div class="v">${m.valor===null?'N/A':m.valor+m.unidade}</div>
-      <div class="c">base de ${m.denominador.toLocaleString('pt-BR')}</div></div>`).join('');
+      <div class="c">base de ${m.denominador.toLocaleString('pt-BR')}</div>
+      <div class="obs">${m.observacao}</div></div>`).join('');
   }catch{ $('#kpis').innerHTML='<div class="card kpi"><div class="l">indisponível, rode o ETL</div></div>'; }
 }
 async function execucao(){
