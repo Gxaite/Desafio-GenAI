@@ -46,14 +46,15 @@ _TEMPLATE = Template(
     <div class="kpi">
       <div class="t">{{ m.nome }}</div>
       <div class="v">{% if m.valor is none %}N/A{% else %}{{ m.valor }}{{ m.unidade }}{% endif %}</div>
-      <div class="n">N = {{ m.denominador }}</div>
+      <div class="n">base de {{ m.denominador }} pessoas avaliadas</div>
     </div>
   {% endfor %}
   </div>
   <div class="kpi-nota">
-    <b>N</b> = base do cálculo (casos com status conhecido). Aumento: vs. período anterior de igual
-    duração · Mortalidade: óbitos / casos com desfecho conhecido · UTI e vacinação: proxies por caso
-    (status conhecido, não leitos nem população).
+    Cada taxa considera apenas as pessoas que tinham a informação registrada. Aumento compara os
+    casos dos últimos 30 dias com os 30 dias anteriores. Mortalidade é a parcela de mortes entre os
+    casos com resultado conhecido. Ocupação de UTI e vacinação são calculadas sobre as pessoas
+    avaliadas, não sobre o total de leitos nem da população.
   </div>
 
   <img src="{{ grafico_diario }}">
@@ -68,10 +69,9 @@ _TEMPLATE = Template(
   </div>{% else %}<div class="fontes">Nenhuma notícia relevante nesta execução.</div>{% endif %}
 
   <div class="rodape">
-    Gerado em {{ gerado_em }} · modelo {{ modelo }} · run {{ run_id }}.
-    Fonte: Open DATASUS (SIVEP-Gripe). UTI e vacinação são proxies por caso; os dias mais
-    recentes (provisórios, atraso de notificação) são excluídos. Números calculados
-    deterministicamente; narrativa escrita pelo LLM sobre esses números. Dicionário de dados no repositório.
+    Fonte dos dados Open DATASUS (SIVEP-Gripe). Os dias mais recentes ainda estão incompletos e por
+    isso ficam de fora. Os números são calculados diretamente dos dados e o texto de contexto apenas
+    os descreve. Gerado em {{ gerado_em }}, modelo {{ modelo }}, execução {{ run_id }}.
   </div>
 </body></html>"""
 )

@@ -1,10 +1,10 @@
 <!-- GERADO por scripts/gerar_readmes.py a partir dos artefatos do dbt. Não edite à mão. -->
 
-# 🥇 Gold
+# Gold
 
 Star schema servido ao backend e ao Grafana. Só agregados cruzam a fronteira (LGPD).
 
-## `gold.dim_data` · table
+## `gold.dim_data` (table)
 
 Dimensão calendário, um registro por dia no intervalo de sintomas observado.
 
@@ -18,7 +18,7 @@ Dimensão calendário, um registro por dia no intervalo de sintomas observado.
 | `dia_semana` | integer | Dia da semana ISO (1=segunda … 7=domingo). |
 | `semana_iso` | integer | Número da semana ISO no ano. |
 
-## `gold.dim_uf` · table
+## `gold.dim_uf` (table)
 
 Dimensão de UF (sigla → nome e região), a partir do seed versionado.
 
@@ -28,7 +28,7 @@ Dimensão de UF (sigla → nome e região), a partir do seed versionado.
 | `uf_nome` | text | Nome por extenso da UF. |
 | `regiao` | text | Região geográfica (Norte, Nordeste, Centro-Oeste, Sudeste, Sul). |
 
-## `gold.fct_srag_diario` · table
+## `gold.fct_srag_diario` (table)
 
 Fato agregado de SRAG por (dia do 1º sintoma, UF). Medidas aditivas; grão único. Fonte das 4 métricas e dos 2 gráficos. Só contagens — servido, sem microdado.
 
@@ -45,7 +45,7 @@ Fato agregado de SRAG por (dia do 1º sintoma, UF). Medidas aditivas; grão úni
 | `vacinados` | bigint | Casos vacinados p/ COVID (VACINA_COV=1) — numerador do proxy de vacinação. |
 | `nao_vacinados` | bigint | Casos não vacinados (VACINA_COV=2) — compõe o denominador do proxy. |
 
-## `gold.gold_mart_srag_diario` · view
+## `gold.gold_mart_srag_diario` (view)
 
 View de serviço (contrato do backend/Grafana): fato denormalizado com dim_uf. Mantém os nomes de coluna esperados pela camada de tools (ev_*, uti_*, vac_*).
 
@@ -65,4 +65,4 @@ View de serviço (contrato do backend/Grafana): fato denormalizado com dim_uf. M
 | `vac_nao` | bigint | Não vacinados (alias de fct.nao_vacinados). |
 
 ---
-Documentação completa (testes, lineage) no site do dbt: `dbt docs generate && dbt docs serve` (ou `docker compose --profile docs up dbt-docs`, porta 8080).
+Documentação completa, com testes e lineage, no site do dbt. Rode `dbt docs generate && dbt docs serve` ou `docker compose --profile docs up dbt-docs` (porta 8080).

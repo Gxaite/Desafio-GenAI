@@ -18,9 +18,9 @@ As 4 métricas exigidas são **sempre calculadas em SQL/Python determinístico**
 | **Taxa de ocupação de UTI** | *proxy*: casos com `UTI == 1` / internações | `UTI` → [[adr-0007-metricas-proxy]] |
 | **Taxa de vacinação** | *proxy*: % de casos vacinados (`VACINA_COV`) | `VACINA_COV` → [[adr-0007-metricas-proxy]] |
 
-> ⚠️ Ocupação de UTI e vacinação são **proxies** — a base traz status por caso, não
-> leitos totais nem cobertura populacional. A premissa é documentada no relatório
-> (rigor premiado em critérios de avaliação).
+> Nota. Ocupação de UTI e vacinação são calculadas sobre as pessoas avaliadas (status por
+> caso), não sobre o total de leitos nem a população. A premissa é documentada no relatório
+> (rigor valorizado nos critérios de avaliação).
 
 ## Dados provisórios (atraso de notificação)
 

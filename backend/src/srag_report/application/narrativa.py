@@ -7,22 +7,28 @@ execução falha explicitamente — sem narrativa determinística que mascare o 
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from srag_report.domain.errors import ErroGuardrail
 from srag_report.domain.models import Metrica, Noticia
 
 _SYSTEM = (
-    "Você é um analista de saúde pública. Escreva de 2 a 3 frases objetivas, em português, "
-    "contextualizando as métricas de SRAG fornecidas e citando uma notícia quando pertinente. "
-    "Use somente os números e as fontes fornecidos; nunca invente dados nem cite valores fora "
-    "da lista. Vá direto ao ponto, sem introduções e sem travessões."
+    "Você é um analista de saúde pública escrevendo para leitores não técnicos. Escreva de 2 a 3 "
+    "frases claras e diretas, em português simples, explicando o cenário das métricas de SRAG e "
+    "citando uma notícia quando fizer sentido. Use somente os números e as fontes fornecidos e "
+    "nunca invente dados. Trate as taxas como percentuais entre as pessoas avaliadas, não como "
+    "cobertura da população. Evite jargão e rótulos técnicos. Não use títulos, listas nem "
+    "marcação de markdown, apenas frases corridas. Não use travessões, dois-pontos nem ponto e "
+    "vírgula."
 )
+
+_MARKDOWN = re.compile(r"(?m)^\s*#+\s*|[*_`]+")
 
 
 def _fmt_metrica(m: Metrica) -> str:
     valor = "N/A" if m.valor is None else f"{m.valor}{m.unidade}"
-    return f"- {m.nome}: {valor} (N={m.denominador})"
+    return f"- {m.nome}: {valor} (base de {m.denominador} pessoas avaliadas)"
 
 
 def montar_prompt(
@@ -39,8 +45,8 @@ def montar_prompt(
 
 
 def validar_narrativa(texto: str) -> str:
-    """Guardrail de saída: rejeita narrativa vazia."""
-    limpo = texto.strip()
+    """Guardrail de saída: remove marcação de markdown e rejeita narrativa vazia."""
+    limpo = _MARKDOWN.sub("", texto).strip()
     if not limpo:
         raise ErroGuardrail("narrativa vazia retornada pelo LLM")
     return limpo

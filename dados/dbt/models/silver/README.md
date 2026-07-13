@@ -1,10 +1,10 @@
 <!-- GERADO por scripts/gerar_readmes.py a partir dos artefatos do dbt. Não edite à mão. -->
 
-# 🥈 Silver
+# Silver
 
-Casos limpos, tipados e deduplicados, com flags de negócio. Ainda a nível de caso; não é servido.
+Casos limpos, tipados e deduplicados, com marcadores de negócio. Ainda a nível de caso, não é servido.
 
-## `silver.silver_srag_casos` · table
+## `silver.silver_srag_casos` (table)
 
 Casos de SRAG limpos, tipados e deduplicados por notificação (1 linha/caso), com flags de negócio (óbito, UTI, vacinação e "conhecido") que alimentam o fato agregado da gold. Camada silver: ainda a nível de caso, não é servida — só a gold cruza a fronteira.
 
@@ -18,4 +18,4 @@ Casos de SRAG limpos, tipados e deduplicados por notificação (1 linha/caso), c
 | `vacina_covid` | text | Vacinado COVID: 1=sim, 2=não, 9=ignorado. |
 
 ---
-Documentação completa (testes, lineage) no site do dbt: `dbt docs generate && dbt docs serve` (ou `docker compose --profile docs up dbt-docs`, porta 8080).
+Documentação completa, com testes e lineage, no site do dbt. Rode `dbt docs generate && dbt docs serve` ou `docker compose --profile docs up dbt-docs` (porta 8080).

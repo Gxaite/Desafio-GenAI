@@ -22,9 +22,9 @@ _MODELS = _AQUI / "models"
 
 # Texto de abertura por camada (o manifest não tem prosa a nível de camada).
 _CAMADAS = {
-    "bronze": ("🥉 Bronze", "Landing bruto, carregado pelo passo EL (Python). Só as colunas necessárias (minimização LGPD)."),
-    "silver": ("🥈 Silver", "Casos limpos, tipados e deduplicados, com flags de negócio. Ainda a nível de caso; não é servido."),
-    "gold": ("🥇 Gold", "Star schema servido ao backend e ao Grafana. Só agregados cruzam a fronteira (LGPD)."),
+    "bronze": ("Bronze", "Landing bruto, carregado pelo passo EL em Python. Só as colunas necessárias (minimização LGPD)."),
+    "silver": ("Silver", "Casos limpos, tipados e deduplicados, com marcadores de negócio. Ainda a nível de caso, não é servido."),
+    "gold": ("Gold", "Star schema servido ao backend e ao Grafana. Só agregados cruzam a fronteira (LGPD)."),
 }
 
 _AVISO = "<!-- GERADO por scripts/gerar_readmes.py a partir dos artefatos do dbt. Não edite à mão. -->"
@@ -77,7 +77,7 @@ def _render(camada: str, objetos: list[dict]) -> str:
     titulo, intro = _CAMADAS[camada]
     linhas = [_AVISO, "", f"# {titulo}", "", intro, ""]
     for o in objetos:
-        linhas.append(f"## `{o['schema']}.{o['nome']}` · {o['materializacao']}")
+        linhas.append(f"## `{o['schema']}.{o['nome']}` ({o['materializacao']})")
         if o["descricao"]:
             linhas += ["", o["descricao"]]
         if o["colunas"]:
@@ -87,8 +87,8 @@ def _render(camada: str, objetos: list[dict]) -> str:
         linhas.append("")
     linhas += [
         "---",
-        "Documentação completa (testes, lineage) no site do dbt: `dbt docs generate && dbt docs serve` "
-        "(ou `docker compose --profile docs up dbt-docs`, porta 8080).",
+        "Documentação completa, com testes e lineage, no site do dbt. Rode `dbt docs generate && "
+        "dbt docs serve` ou `docker compose --profile docs up dbt-docs` (porta 8080).",
         "",
     ]
     return "\n".join(linhas)

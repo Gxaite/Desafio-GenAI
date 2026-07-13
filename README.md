@@ -105,28 +105,28 @@ segue **hexagonal (Ports & Adapters)** e os dados seguem **medallion** (bronze, 
 
 ```mermaid
 flowchart TB
-    subgraph FONTES["🌐 &nbsp;Fontes de dados"]
+    subgraph FONTES["Fontes de dados"]
         direction LR
-        CSV[("📄 &nbsp;Open DATASUS<br/><b>SIVEP-Gripe · CSV</b>")]
-        NEWS["📰 &nbsp;NewsAPI<br/><b>notícias em tempo real</b>"]
-        LLM["🤖 &nbsp;Claude<br/><b>via OpenRouter</b>"]
+        CSV[("Open DATASUS<br/><b>SIVEP-Gripe (CSV)</b>")]
+        NEWS["NewsAPI<br/><b>notícias em tempo real</b>"]
+        LLM["Claude<br/><b>via OpenRouter</b>"]
     end
 
-    subgraph ETL["🗄️ &nbsp;Serviço <b>dados</b> · ETL medallion (dbt)"]
+    subgraph ETL["Serviço dados, ETL medallion (dbt)"]
         direction LR
-        BRONZE[("🥉 &nbsp;<b>bronze</b><br/>landing bruto")]
-        SILVER[("🥈 &nbsp;<b>silver</b><br/>limpo · dedup · flags")]
-        GOLD[("🥇 &nbsp;<b>gold</b><br/>star schema servido")]
+        BRONZE[("<b>bronze</b><br/>landing bruto")]
+        SILVER[("<b>silver</b><br/>limpo, dedup, flags")]
+        GOLD[("<b>gold</b><br/>star schema servido")]
         BRONZE --> SILVER --> GOLD
     end
 
-    subgraph AGENTE["⚙️ &nbsp;Serviço <b>backend</b> · Agente Orquestrador (LangGraph)"]
+    subgraph AGENTE["Serviço backend, Agente Orquestrador (LangGraph)"]
         direction LR
-        T1["🧮 &nbsp;calcular_metricas"]
-        T2["📈 &nbsp;dados_grafico"]
-        T3["🔎 &nbsp;buscar_noticias"]
-        NARR["✍️ &nbsp;narrativa<br/><i>LLM · grounded</i>"]
-        REL["📑 &nbsp;montar relatório<br/><i>Plotly + WeasyPrint</i>"]
+        T1["calcular_metricas"]
+        T2["dados_grafico"]
+        T3["buscar_noticias"]
+        NARR["narrativa<br/><i>LLM grounded</i>"]
+        REL["montar relatório<br/><i>Plotly + WeasyPrint</i>"]
         T1 --> T2 --> T3 --> NARR --> REL
     end
 
@@ -134,9 +134,9 @@ flowchart TB
     GOLD ==> T1 & T2
     NEWS ==> T3
     LLM ==> NARR
-    REL ==> PDF["📕 &nbsp;<b>Relatório PDF</b>"]
-    GOLD ==> GRAF["📊 &nbsp;<b>Grafana</b>"]
-    AGENTE -. "registra trilha" .-> AUD[("🧾 &nbsp;Auditoria<br/>por run_id")]
+    REL ==> PDF["<b>Relatório PDF</b>"]
+    GOLD ==> GRAF["<b>Grafana</b>"]
+    AGENTE -. "registra trilha" .-> AUD[("<b>Auditoria</b><br/>por run_id")]
 
     classDef src fill:#eef2ff,stroke:#6366f1,stroke-width:1.5px,color:#312e81;
     classDef bronze fill:#f6e4d2,stroke:#b06f2f,stroke-width:1.5px,color:#5c3a13;
@@ -216,10 +216,10 @@ UTI e vacinação são proxies explícitos, pois a base traz status por caso, n�
 cobertura populacional. A premissa é documentada no relatório e os denominadores usam apenas
 valores conhecidos (1 ou 2). Gráficos: casos diários (30 dias) e casos mensais (12 meses).
 
-📖 **Dicionário de dados:** [`docs/dicionario-de-dados.md`](docs/dicionario-de-dados.md) —
-campos de origem usados, esquema da camada gold que criamos e o que é o **N** de cada métrica.
-Fonte oficial: [Open DATASUS / SIVEP-Gripe](https://opendatasus.saude.gov.br) (dicionário e ficha
-em [`data/reference/`](data/reference)).
+**Dicionário de dados** em [`docs/dicionario-de-dados.md`](docs/dicionario-de-dados.md), com os
+campos de origem usados, o esquema da camada gold que criamos e o significado da base de cada
+métrica. Fonte oficial [Open DATASUS / SIVEP-Gripe](https://opendatasus.saude.gov.br), com
+dicionário e ficha em [`data/reference/`](data/reference).
 
 <p align="center">
   <img src="docs/assets/relatorio.png" alt="Relatório de SRAG em PDF: as quatro métricas, os dois gráficos, a narrativa e as fontes consultadas" width="640">

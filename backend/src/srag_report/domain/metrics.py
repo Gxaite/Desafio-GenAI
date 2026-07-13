@@ -24,7 +24,7 @@ def taxa_aumento_casos(casos_atual: int, casos_anterior: int) -> Metrica:
         valor=_taxa(casos_atual - casos_anterior, casos_anterior),
         unidade="%",
         denominador=casos_anterior,
-        observacao="variação vs. período anterior de igual duração",
+        observacao="Compara os casos dos últimos 30 dias com os 30 dias anteriores",
     )
 
 
@@ -36,7 +36,7 @@ def taxa_mortalidade(a: AgregadoSRAG) -> Metrica:
         valor=_taxa(a.ev_obito, denominador),
         unidade="%",
         denominador=denominador,
-        observacao="óbitos (EVOLUCAO=2) / casos com desfecho conhecido",
+        observacao="Parcela de mortes entre os casos com resultado conhecido",
     )
 
 
@@ -48,7 +48,7 @@ def taxa_ocupacao_uti(a: AgregadoSRAG) -> Metrica:
         valor=_taxa(a.uti_sim, denominador),
         unidade="%",
         denominador=denominador,
-        observacao="proxy: casos com UTI=sim / casos com UTI conhecida (não leitos)",
+        observacao="Parcela que precisou de UTI entre as pessoas avaliadas",
     )
 
 
@@ -60,5 +60,5 @@ def taxa_vacinacao(a: AgregadoSRAG) -> Metrica:
         valor=_taxa(a.vac_sim, denominador),
         unidade="%",
         denominador=denominador,
-        observacao="proxy: vacinados / casos com status conhecido (não cobertura populacional)",
+        observacao="Parcela de vacinados entre as pessoas avaliadas",
     )
