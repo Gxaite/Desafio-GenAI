@@ -1,7 +1,7 @@
 # Desafio GenAI · Relatório Automatizado de SRAG
 
-![coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
-![tests](https://img.shields.io/badge/pytest-29%20passing-brightgreen)
+![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![tests](https://img.shields.io/badge/pytest-35%20passing-brightgreen)
 ![dbt tests](https://img.shields.io/badge/dbt%20tests-34%20passing-brightgreen)
 ![SonarQube](https://img.shields.io/badge/SonarQube-0%20bugs%20%C2%B7%200%20vulns-brightgreen)
 ![arch](https://img.shields.io/badge/arquitetura-hexagonal%20%2B%20medallion-blue)
@@ -38,8 +38,8 @@ Pré-requisitos: **Docker** (com integração WSL2 ativa, se aplicável) e as ch
 cp .env.example .env
 #    preencha OPENROUTER_API_KEY e NEWSAPI_KEY no .env
 
-# 2. Suba a stack (Postgres, backend/agente, Grafana)
-docker compose up -d postgres backend grafana
+# 2. Suba a stack (Postgres, backend/agente, Grafana e SonarQube)
+docker compose up -d
 
 # 3. Rode o ETL (bronze -> silver -> gold + testes de dados)
 docker compose --profile etl run --rm dados
@@ -192,7 +192,7 @@ valores conhecidos (1 ou 2). Gráficos: casos diários (30 dias) e casos mensais
 Portões automatizados, executados no CI a cada push:
 
 - `ruff` (lint e formatação), `mypy --strict` (tipagem) e `import-linter` (fronteiras do hexágono)
-- `pytest` com cobertura mínima de 85% (atual ~99%) e casos de borda
+- `pytest` com cobertura mínima de 85% (atual 100%) e casos de borda
 - `bandit` (segurança) e `sqlfluff` (lint de SQL do dbt)
 
 ```bash
@@ -201,17 +201,17 @@ uv run --extra dev ruff check . && uv run --extra dev mypy src
 uv run --extra dev lint-imports && uv run --extra dev bandit -r src -q
 ```
 
-**SonarQube** (dashboard de qualidade, opcional, profile `quality`):
+**SonarQube** — o servidor sobe junto com a stack em http://localhost:9000. Para rodar a
+análise, gere um token no SonarQube e dispare o scanner (job do profile `quality`):
 
 ```bash
-docker compose --profile quality up -d sonar-db sonarqube   # http://localhost:9000
 cd backend && uv run --extra dev pytest                     # gera coverage.xml
 SONAR_TOKEN=<token> docker compose --profile quality run --rm sonar-scanner
 ```
 
 <p align="center">
-  <img src="docs/assets/sonarqube.png" alt="SonarQube (Overall Code): 0 bugs, 0 vulnerabilidades, 0 security hotspots, ratings A, 82,3% de cobertura e 0% de duplicação" width="880">
-  <br><sub><b>SonarQube</b> em <code>localhost:9000</code> — 0 bugs, 0 vulnerabilidades, 0 hotspots, ratings A e 0% de duplicação (visão <i>Overall Code</i>).</sub>
+  <img src="docs/assets/sonarqube.png" alt="SonarQube: Quality Gate Passed, 0 bugs, 0 vulnerabilidades, 0 security hotspots, ratings A, 100% de cobertura e 0% de duplicação" width="900">
+  <br><sub><b>SonarQube</b> em <code>localhost:9000</code> — Quality Gate <b>Passed</b>: 0 bugs, 0 vulnerabilidades, 0 hotspots, ratings A, <b>100% de cobertura</b> e 0% de duplicação.</sub>
 </p>
 
 Última análise: cobertura 99,4%, 0 bugs, 0 vulnerabilidades, 0 hotspots, 0% duplicação. Os

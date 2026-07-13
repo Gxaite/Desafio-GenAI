@@ -12,7 +12,10 @@ from srag_report.application.tools import buscar_noticias
 from srag_report.domain import news
 from srag_report.domain.errors import ErroFonteNoticias
 from srag_report.domain.models import Noticia
-from srag_report.infrastructure.news.newsapi_client import NewsApiFonteNoticias
+from srag_report.infrastructure.news.newsapi_client import (
+    NewsApiFonteNoticias,
+    _e_transitorio,
+)
 
 
 def _noticia(titulo: str, descricao: str | None = None) -> Noticia:
@@ -64,6 +67,19 @@ def test_adapter_erro_transitorio_vira_erro_dominio() -> None:
 
     with pytest.raises(ErroFonteNoticias):
         NewsApiFonteNoticias("k", client=_client(handler)).buscar("SRAG")
+
+
+def test_classificacao_de_erro_transitorio() -> None:
+    """Retry só em erros transitórios: rede e 429/5xx sim; 4xx e demais, não."""
+    req = httpx.Request("GET", "http://x")
+    status_erro = lambda code: httpx.HTTPStatusError(  # noqa: E731
+        "e", request=req, response=httpx.Response(code, request=req)
+    )
+    assert _e_transitorio(httpx.ConnectError("sem rede")) is True  # TransportError
+    assert _e_transitorio(status_erro(503)) is True  # 5xx transitório
+    assert _e_transitorio(status_erro(429)) is True  # rate limit
+    assert _e_transitorio(status_erro(404)) is False  # 4xx permanente
+    assert _e_transitorio(ValueError("outra")) is False  # nada a ver com HTTP
 
 
 # ── tool (composição) ──
