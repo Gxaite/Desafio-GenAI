@@ -38,8 +38,8 @@ Pré-requisitos: **Docker** (com integração WSL2 ativa, se aplicável) e as ch
 cp .env.example .env
 #    preencha OPENROUTER_API_KEY e NEWSAPI_KEY no .env
 
-# 2. Suba a stack (Postgres, backend/agente, Grafana e SonarQube)
-docker compose up -d
+# 2. Suba a stack (Postgres, backend/agente, Grafana)
+docker compose up -d postgres backend grafana
 
 # 3. Rode o ETL (bronze -> silver -> gold + testes de dados)
 docker compose --profile etl run --rm dados
@@ -67,7 +67,7 @@ Endpoints principais:
 | `GET /relatorio/stream` | Gera o relatório emitindo o progresso do agente nó a nó (SSE) |
 | `GET /metricas` | As quatro métricas em JSON |
 | `GET /noticias` | Histórico de notícias, filtrável por `fonte` e `dias` (período) |
-| `GET /noticias/serie` e `/noticias/fontes` | Volume mensal (histograma) e fontes distintas do histórico |
+| `GET /noticias/serie` e `/noticias/fontes` | Volume mensal e fontes distintas do histórico |
 | `POST /noticias/buscar` | Coleta notícias (10 consultas) e persiste no histórico; retorna quantas são novas |
 | `GET /agente/grafo` | Página do fluxo do agente (fonte Mermaid em `?format=mermaid`) |
 | `GET /auditoria/execucoes` e `/{run_id}` | Execuções do agente e a trilha detalhada (tempos, fontes) |
@@ -201,10 +201,10 @@ uv run --extra dev ruff check . && uv run --extra dev mypy src
 uv run --extra dev lint-imports && uv run --extra dev bandit -r src -q
 ```
 
-**SonarQube** — o servidor sobe junto com a stack em http://localhost:9000. Para rodar a
-análise, gere um token no SonarQube e dispare o scanner (job do profile `quality`):
+**SonarQube** (dashboard de qualidade, profile `quality`; sobe sob demanda, não fica rodando):
 
 ```bash
+docker compose --profile quality up -d sonar-db sonarqube   # http://localhost:9000
 cd backend && uv run --extra dev pytest                     # gera coverage.xml
 SONAR_TOKEN=<token> docker compose --profile quality run --rm sonar-scanner
 ```

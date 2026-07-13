@@ -136,19 +136,10 @@ PAGINA = """<!doctype html>
     padding:2px 9px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ni .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ni .dt{color:var(--faint);text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
-  /* filtros + histograma do explorador */
+  /* filtros do explorador */
   .nfilters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
   .nfilters select{font:inherit;font-size:13px;color:var(--ink);background:var(--bg);
     border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
-  .hist{display:flex;align-items:flex-end;gap:6px;height:96px;margin:6px 0 20px;
-    padding-bottom:22px;border-bottom:1px solid var(--line)}
-  .hist .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
-    height:100%;position:relative;min-width:0}
-  .hist .bar{width:100%;max-width:34px;background:var(--accent);border-radius:4px 4px 0 0;
-    min-height:2px;transition:height .3s;opacity:.9}
-  .hist .col:hover .bar{opacity:1}
-  .hist .cv{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-bottom:3px}
-  .hist .cl{position:absolute;bottom:-20px;font-size:10.5px;color:var(--faint);white-space:nowrap}
 
   footer{color:var(--faint);font-size:13px;padding:56px 0 40px;text-align:center;
     border-top:1px solid var(--line);margin-top:72px;line-height:1.7}
@@ -221,7 +212,6 @@ PAGINA = """<!doctype html>
       </select>
       <select id="ffonte"><option value="">Todas as fontes</option></select>
     </div>
-    <div class="hist" id="hist"></div>
     <div class="nbar">
       <span id="ncount">carregando</span>
       <button class="btn ghost" id="buscar" style="padding:8px 14px">Buscar mais</button>
@@ -304,7 +294,6 @@ function gerar(){
 }
 $('#gerar').onclick=gerar; $('#gerar2').onclick=gerar;
 
-const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 function qs(){ const d=$('#fperiodo').value, f=$('#ffonte').value;
   const p=new URLSearchParams(); if(d)p.set('dias',d); if(f)p.set('fonte',f); return p; }
 async function fontesFiltro(){
@@ -315,20 +304,6 @@ async function fontesFiltro(){
       fs.map(f=>`<option value="${f}">${f}</option>`).join('');
     $('#ffonte').value=atual;
   }catch{}
-}
-async function histograma(){
-  try{
-    const p=new URLSearchParams(); const d=$('#fperiodo').value; if(d)p.set('dias',d);
-    const s = await (await j('/noticias/serie?'+p)).json();
-    if(!s.length){ $('#hist').innerHTML=''; return; }
-    const max=Math.max(...s.map(x=>x.total));
-    $('#hist').innerHTML = s.map(x=>{
-      const dt=new Date(x.competencia), h=Math.round(100*x.total/max);
-      return `<div class="col" title="${x.total} notícias"><span class="cv">${x.total}</span>
-        <div class="bar" style="height:${h}%"></div>
-        <span class="cl">${MES[dt.getUTCMonth()]}/${String(dt.getUTCFullYear()).slice(2)}</span></div>`;
-    }).join('');
-  }catch{ $('#hist').innerHTML=''; }
 }
 async function noticias(){
   try{
@@ -341,8 +316,8 @@ async function noticias(){
       : '<div style="color:var(--faint);padding:8px 4px">nada neste período. amplie o filtro ou clique em Buscar mais.</div>';
   }catch{ $('#ncount').textContent='indisponível'; }
 }
-async function explorador(){ await Promise.all([histograma(), noticias()]); }
-$('#fperiodo').onchange=explorador; $('#ffonte').onchange=noticias;
+async function explorador(){ await noticias(); }
+$('#fperiodo').onchange=noticias; $('#ffonte').onchange=noticias;
 $('#buscar').onclick=async e=>{
   const b=e.target; b.disabled=true; b.textContent='buscando…';
   try{ const r=await (await j('/noticias/buscar',{method:'POST'})).json(); b.textContent=(r.novas||0)+' novas';
@@ -388,19 +363,26 @@ GRAFO = """<!doctype html>
   h1{font-size:34px;line-height:1.1;letter-spacing:-.03em;margin:12px 0 10px;font-weight:700}
   .hero p{color:var(--muted);font-size:16px;max-width:58ch;margin:0 auto}
 
-  .flow{display:flex;align-items:stretch;justify-content:center;gap:0;flex-wrap:wrap;margin:52px 0 24px}
-  .cap{align-self:center;font-size:12px;font-weight:600;color:var(--muted);
-    background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:6px 14px;white-space:nowrap}
-  .node{width:158px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-    padding:16px;text-align:center;box-shadow:var(--shadow)}
-  .node .nn{width:24px;height:24px;border-radius:50%;background:var(--accent-weak);color:var(--accent);
-    font-weight:700;font-size:12px;display:grid;place-items:center;margin:0 auto 10px}
-  .node .nt{font-size:15px;font-weight:650;margin-bottom:3px}
-  .node .ns{font-size:12px;color:var(--muted)}
-  .node .tag{display:inline-block;margin-top:10px;font-size:11px;color:var(--muted);
-    font-family:var(--mono);background:var(--soft);border:1px solid var(--line);padding:1px 8px;border-radius:6px}
-  .arrow{align-self:center;color:var(--faint);padding:0 10px;font-size:16px}
-  @media(max-width:760px){.flow{flex-direction:column;align-items:center}.arrow{transform:rotate(90deg);padding:8px 0}}
+  .graph{position:relative;margin:40px 0 6px;border:1px solid var(--line);border-radius:var(--radius);
+    background:radial-gradient(120% 100% at 50% 0%,var(--accent-weak),var(--panel) 60%);
+    box-shadow:var(--shadow);overflow:hidden;height:520px}
+  .graph svg{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+  .link{stroke:var(--line);stroke-width:1.6px;transition:stroke .2s,opacity .2s,stroke-width .2s}
+  .link.hot{stroke:var(--accent);stroke-width:2.6px}
+  .link.dim{opacity:.12}
+  .gnode{cursor:pointer;transition:opacity .2s}
+  .gnode.dim{opacity:.18}
+  .gnode circle{stroke:var(--panel);stroke-width:3px}
+  .gnode .lbl{fill:var(--ink);font-size:12.5px;font-weight:650;pointer-events:none;
+    paint-order:stroke;stroke:var(--panel);stroke-width:3.5px;stroke-linejoin:round}
+  .gnode .sub{fill:var(--muted);font-size:10px;font-weight:500;pointer-events:none;
+    paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round}
+  .c-core{fill:var(--accent)} .c-tool{fill:#4f46e5} .c-llm{fill:#7c3aed}
+  .c-out{fill:#16a34a} .c-data{fill:#c98a2b} .c-aux{fill:#8a909c}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
+  .legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .hint{text-align:center;font-size:12px;color:var(--faint);margin:8px 0 0}
 
   .note{color:var(--muted);font-size:13.5px;margin:16px auto 0;line-height:1.6;max-width:70ch;text-align:center}
   .src{margin-top:26px;font-size:12.5px;text-align:center}.src a{color:var(--accent)}
@@ -420,27 +402,20 @@ GRAFO = """<!doctype html>
   <section class="hero">
     <div class="eyebrow">Orquestração</div>
     <h1>Fluxo do agente</h1>
-    <p>Grafo linear em LangGraph. Cada nó é um passo determinístico e auditável, em que as três
+    <p>Orquestração em LangGraph. Cada nó é um passo determinístico e auditável, em que as três
        tools alimentam o estado e o nó de narrativa contextualiza os números com o LLM.</p>
   </section>
 
-  <div class="flow">
-    <span class="cap">início</span>
-    <span class="arrow">&rarr;</span>
-    <div class="node"><div class="nn">1</div><div class="nt">Métricas</div>
-      <div class="ns">calcula as quatro taxas</div><span class="tag">gold</span></div>
-    <span class="arrow">&rarr;</span>
-    <div class="node"><div class="nn">2</div><div class="nt">Gráficos</div>
-      <div class="ns">séries 30d e 12m</div><span class="tag">gold</span></div>
-    <span class="arrow">&rarr;</span>
-    <div class="node"><div class="nn">3</div><div class="nt">Notícias</div>
-      <div class="ns">busca e filtra</div><span class="tag">NewsAPI</span></div>
-    <span class="arrow">&rarr;</span>
-    <div class="node"><div class="nn">4</div><div class="nt">Narrativa</div>
-      <div class="ns">contextualiza</div><span class="tag">LLM</span></div>
-    <span class="arrow">&rarr;</span>
-    <span class="cap">relatório</span>
+  <div class="graph"><svg id="g" viewBox="0 0 820 520" preserveAspectRatio="xMidYMid meet"></svg></div>
+  <div class="legend">
+    <span><i style="background:var(--accent)"></i> Orquestrador</span>
+    <span><i style="background:#4f46e5"></i> Tools</span>
+    <span><i style="background:#7c3aed"></i> LLM</span>
+    <span><i style="background:#c98a2b"></i> Fontes de dados</span>
+    <span><i style="background:#16a34a"></i> Saída</span>
+    <span><i style="background:#8a909c"></i> Auditoria</span>
   </div>
+  <p class="hint">Passe o mouse para destacar as conexões · arraste os nós para reorganizar</p>
 
   <p class="note">Este é o fluxo que o agente percorre para produzir o relatório de SRAG. As tools
      apuram as métricas e as séries no banco e coletam as notícias, e o nó de narrativa usa o LLM
@@ -456,5 +431,85 @@ GRAFO = """<!doctype html>
     const b=document.getElementById('theme'); if(b) b.textContent=t==='dark'?'☀':'☾'; }
   document.getElementById('theme').onclick=()=>_st(_r.getAttribute('data-theme')==='dark'?'light':'dark');
   _st(_r.getAttribute('data-theme')||'light');
+
+  // ── grafo force-directed (estilo Obsidian), sem libs externas ──
+  (function(){
+    const svg=document.getElementById('g'); if(!svg) return;
+    const NS='http://www.w3.org/2000/svg', W=820, H=520;
+    const N=[
+      {id:'gold',t:'gold',s:'Postgres',c:'data'},
+      {id:'news',t:'NewsAPI',s:'tempo real',c:'data'},
+      {id:'llm',t:'Claude',s:'OpenRouter',c:'data'},
+      {id:'ag',t:'Orquestrador',s:'LangGraph',c:'core'},
+      {id:'met',t:'calcular_metricas',s:'tool',c:'tool'},
+      {id:'gra',t:'dados_grafico',s:'tool',c:'tool'},
+      {id:'not',t:'buscar_noticias',s:'tool',c:'tool'},
+      {id:'nar',t:'narrativa',s:'LLM · grounded',c:'llm'},
+      {id:'rel',t:'Relatório PDF',s:'saída',c:'out'},
+      {id:'aud',t:'Auditoria',s:'trilha · run_id',c:'aux'}
+    ];
+    const E=[['ag','met'],['ag','gra'],['ag','not'],['ag','nar'],['ag','rel'],['ag','aud'],
+      ['gold','met'],['gold','gra'],['news','not'],['llm','nar'],
+      ['met','nar'],['gra','nar'],['not','nar'],['nar','rel']];
+    const by={};
+    N.forEach(function(n,i){ by[n.id]=n; var a=i/N.length*Math.PI*2;
+      n.x=W/2+Math.cos(a)*165; n.y=H/2+Math.sin(a)*120; n.vx=0; n.vy=0; n.r=(n.c==='core'?26:18); });
+    by.ag.x=W/2; by.ag.y=H/2;
+    const links=E.map(function(e){ return {s:by[e[0]], t:by[e[1]]}; });
+    let alpha=1, drag=null;
+
+    const linkEls=links.map(function(){ var e=document.createElementNS(NS,'line'); e.setAttribute('class','link'); svg.appendChild(e); return e; });
+    N.forEach(function(n){
+      var g=document.createElementNS(NS,'g'); g.setAttribute('class','gnode');
+      var c=document.createElementNS(NS,'circle'); c.setAttribute('class','c-'+n.c); c.setAttribute('r',n.r);
+      var t1=document.createElementNS(NS,'text'); t1.setAttribute('class','lbl'); t1.setAttribute('text-anchor','middle'); t1.textContent=n.t;
+      var t2=document.createElementNS(NS,'text'); t2.setAttribute('class','sub'); t2.setAttribute('text-anchor','middle'); t2.textContent=n.s;
+      g.appendChild(c); g.appendChild(t1); g.appendChild(t2); svg.appendChild(g);
+      n.g=g; n.c1=c; n.l1=t1; n.l2=t2;
+      g.addEventListener('pointerenter',function(){ hi(n); });
+      g.addEventListener('pointerleave',function(){ hi(null); });
+      g.addEventListener('pointerdown',function(ev){ startDrag(n,ev); });
+    });
+
+    function render(){
+      links.forEach(function(l,i){ var e=linkEls[i]; e.setAttribute('x1',l.s.x); e.setAttribute('y1',l.s.y); e.setAttribute('x2',l.t.x); e.setAttribute('y2',l.t.y); });
+      N.forEach(function(n){ n.c1.setAttribute('cx',n.x); n.c1.setAttribute('cy',n.y);
+        n.l1.setAttribute('x',n.x); n.l1.setAttribute('y',n.y+n.r+15);
+        n.l2.setAttribute('x',n.x); n.l2.setAttribute('y',n.y+n.r+28); });
+    }
+    function physics(){
+      for(var i=0;i<N.length;i++)for(var k=i+1;k<N.length;k++){
+        var a=N[i],b=N[k],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||0.01,d=Math.sqrt(d2);
+        var f=9500/d2*alpha, fx=dx/d*f, fy=dy/d*f; a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
+      }
+      links.forEach(function(l){ var dx=l.t.x-l.s.x,dy=l.t.y-l.s.y,d=Math.sqrt(dx*dx+dy*dy)||0.01,
+        f=(d-155)*0.05*alpha, fx=dx/d*f, fy=dy/d*f; l.s.vx+=fx; l.s.vy+=fy; l.t.vx-=fx; l.t.vy-=fy; });
+      N.forEach(function(n){ if(n===drag) return;
+        n.vx+=(W/2-n.x)*0.004*alpha; n.vy+=(H/2-n.y)*0.004*alpha;
+        n.vx*=0.84; n.vy*=0.84; n.x+=n.vx; n.y+=n.vy; });
+      // colisão: impede sobreposição de nós e rótulos, mesmo com a física fria
+      for(var p=0;p<N.length;p++)for(var q=p+1;q<N.length;q++){
+        var a2=N[p],b2=N[q],ex=a2.x-b2.x,ey=a2.y-b2.y,ed=Math.sqrt(ex*ex+ey*ey)||0.01,mn=a2.r+b2.r+74;
+        if(ed<mn){ var pu=(mn-ed)/2,ux=ex/ed,uy=ey/ed;
+          if(a2!==drag){a2.x+=ux*pu; a2.y+=uy*pu;} if(b2!==drag){b2.x-=ux*pu; b2.y-=uy*pu;} }
+      }
+      N.forEach(function(n){ n.x=Math.max(56,Math.min(W-56,n.x)); n.y=Math.max(46,Math.min(H-50,n.y)); });
+      alpha=Math.max(alpha*0.99,0.045);
+    }
+    function tick(){ physics(); render(); requestAnimationFrame(tick); }
+    function hi(n){
+      var nb={}; if(n){ nb[n.id]=1; links.forEach(function(l){ if(l.s===n)nb[l.t.id]=1; if(l.t===n)nb[l.s.id]=1; }); }
+      N.forEach(function(m){ m.g.classList.toggle('dim', !!n && !nb[m.id]); });
+      links.forEach(function(l,i){ var on=n&&(l.s===n||l.t===n); linkEls[i].classList.toggle('hot',!!on); linkEls[i].classList.toggle('dim', !!n && !on); });
+    }
+    function pt(e){ var r=svg.getBoundingClientRect(); return {x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H}; }
+    function startDrag(n,ev){ ev.preventDefault(); drag=n; alpha=Math.max(alpha,0.4);
+      function mv(e){ var p=pt(e); n.x=p.x; n.y=p.y; n.vx=0; n.vy=0; }
+      function up(){ drag=null; window.removeEventListener('pointermove',mv); window.removeEventListener('pointerup',up); }
+      window.addEventListener('pointermove',mv); window.addEventListener('pointerup',up);
+    }
+    for(var w=0; w<520; w++) physics();  // warm-up: já abre espalhado
+    alpha=0.12; render(); tick();
+  })();
 </script>
 </body></html>"""
