@@ -11,7 +11,7 @@ from typing import Any
 import psycopg
 
 from srag_report.domain.errors import ErroDados
-from srag_report.domain.models import AgregadoSRAG, Periodo, PontoSerie
+from srag_report.domain.models import AgregadoSRAG, AgregadoUF, Periodo, PontoSerie
 
 _MART = "gold.gold_mart_srag_diario"
 
@@ -32,14 +32,37 @@ class PostgresRepositorioDados:
         row = self._um(f"SELECT max(dt) FROM {_MART}")  # nosec B608
         return row[0] if row else None
 
-    def agregado(self, periodo: Periodo) -> AgregadoSRAG:
+    def agregado(self, periodo: Periodo, uf: str | None = None) -> AgregadoSRAG:
         somas = ", ".join(f"coalesce(sum({c}), 0)" for c in _COLUNAS_AGREGADO)
-        row = self._um(
-            f"SELECT {somas} FROM {_MART} WHERE dt BETWEEN %s AND %s",  # nosec B608
-            (periodo.inicio, periodo.fim),
-        )
+        sql = f"SELECT {somas} FROM {_MART} WHERE dt BETWEEN %s AND %s"  # nosec B608
+        params: list[Any] = [periodo.inicio, periodo.fim]
+        if uf:
+            sql += " AND uf = %s"
+            params.append(uf)
+        row = self._um(sql, tuple(params))
         valores = row if row else (0,) * len(_COLUNAS_AGREGADO)
         return AgregadoSRAG(**dict(zip(_COLUNAS_AGREGADO, valores, strict=True)))
+
+    def agregado_por_uf(self, periodo: Periodo) -> list[AgregadoUF]:
+        # Taxas calculadas no banco (mesmas fórmulas das métricas), só para o mapa.
+        sql = (
+            "SELECT uf, max(uf_nome), max(regiao), coalesce(sum(casos), 0), "
+            "round(100.0*sum(ev_obito)/nullif(sum(ev_cura+ev_obito+ev_obito_outras), 0), 2), "
+            "round(100.0*sum(uti_sim)/nullif(sum(uti_sim+uti_nao), 0), 2), "
+            "round(100.0*sum(vac_sim)/nullif(sum(vac_sim+vac_nao), 0), 2) "
+            f"FROM {_MART} WHERE dt BETWEEN %s AND %s GROUP BY uf ORDER BY 4 DESC"  # nosec B608
+        )
+        rows = self._todos(sql, (periodo.inicio, periodo.fim))
+        return [
+            AgregadoUF(
+                uf=r[0], uf_nome=r[1] or r[0], regiao=r[2] or "Desconhecida",
+                casos=int(r[3]),
+                mortalidade=None if r[4] is None else float(r[4]),
+                uti=None if r[5] is None else float(r[5]),
+                vacinacao=None if r[6] is None else float(r[6]),
+            )
+            for r in rows
+        ]
 
     def serie_diaria(self, periodo: Periodo) -> list[PontoSerie]:
         return self._serie(

@@ -24,7 +24,7 @@ class _RepoVazio:
     def data_mais_recente(self) -> date | None:
         return None
 
-    def agregado(self, periodo: Periodo) -> AgregadoSRAG:
+    def agregado(self, periodo: Periodo, uf: str | None = None) -> AgregadoSRAG:
         return AgregadoSRAG()
 
     def serie_diaria(self, periodo: Periodo) -> list[PontoSerie]:
@@ -45,7 +45,7 @@ class _Repo:
     def data_mais_recente(self) -> date | None:
         return REF
 
-    def agregado(self, periodo: Periodo) -> AgregadoSRAG:
+    def agregado(self, periodo: Periodo, uf: str | None = None) -> AgregadoSRAG:
         return AgregadoSRAG(casos=100, ev_cura=90, ev_obito=5, ev_obito_outras=5,
                             uti_sim=25, uti_nao=75, vac_sim=38, vac_nao=62)
 

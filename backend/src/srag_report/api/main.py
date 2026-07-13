@@ -18,14 +18,18 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 
 from srag_report.api.agendador import loop_coleta
 from srag_report.api.landing import GRAFO, PAGINA
+from srag_report.api.mapa_svg import ESTADOS_SVG
 from srag_report.application.noticias import atualizar_historico
 from srag_report.application.orchestration import construir_grafo
+from srag_report.application.regional import analise_regional
 from srag_report.application.relatorio import gerar_relatorio_pdf, gerar_relatorio_stream
-from srag_report.application.tools import calcular_metricas
+from srag_report.application.tools import calcular_metricas, mapa_uf
 from srag_report.composition import montar_dependencias
 from srag_report.config.settings import settings
 from srag_report.domain.errors import SragReportError
 from srag_report.domain.models import (
+    AgregadoUF,
+    AnaliseRegional,
     ContagemMensal,
     ExecucaoAgente,
     Metrica,
@@ -96,6 +100,38 @@ def metricas() -> list[Metrica]:
     deps = montar_dependencias()
     try:
         return calcular_metricas(deps.repo, dias_provisorios=settings.dados_dias_provisorios)
+    except SragReportError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/mapa/estados.svg", include_in_schema=False)
+def mapa_estados_svg() -> Response:
+    """Malha dos estados do Brasil (paths SVG) para o choropleth do hub."""
+    return Response(content=ESTADOS_SVG, media_type="image/svg+xml")
+
+
+@app.get("/mapa")
+def mapa(dias: int = 30) -> list[AgregadoUF]:
+    """Casos e taxas por UF no período (para o mapa). dias<=0 usa todo o histórico."""
+    deps = montar_dependencias()
+    try:
+        return mapa_uf(
+            deps.repo, dias=dias if dias > 0 else None,
+            dias_provisorios=settings.dados_dias_provisorios,
+        )
+    except SragReportError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/analise/regional")
+def analise(uf: str, uf_nome: str = "", foco: str = "") -> AnaliseRegional:
+    """Overview regional de uma UF, gerado pelo LLM sobre as métricas da UF e as notícias."""
+    deps = montar_dependencias()
+    try:
+        return analise_regional(
+            deps.repo, deps.fonte, deps.llm, uf, uf_nome or uf, foco=foco,
+            dias_provisorios=settings.dados_dias_provisorios,
+        )
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 

@@ -127,6 +127,27 @@ PAGINA = """<!doctype html>
   .srcs .s{font-size:12.5px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 12px}
   .srcs .s b{color:var(--ink);font-weight:600}
 
+  /* mapa por UF + análise regional */
+  .mapwrap{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:stretch}
+  .mapcard,.rgpanel{padding:18px}
+  .mapctl{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .mapctl select{font:inherit;font-size:13px;color:var(--ink);background:var(--bg);
+    border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+  .map svg{width:100%;height:auto;display:block}
+  #mapsvg path{fill:var(--soft);stroke:var(--panel);stroke-width:.3;cursor:pointer;transition:fill .2s}
+  #mapsvg path:hover{stroke:var(--ink);stroke-width:.6}
+  #mapsvg path.sel{stroke:var(--ink);stroke-width:.9}
+  .mapesc{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:6px;font-size:11px;color:var(--faint)}
+  .mapesc i{height:9px;width:120px;border-radius:99px;display:inline-block;
+    background:linear-gradient(90deg,#fff1eb,#b91818)}
+  .maplegend{font-size:11.5px;color:var(--faint);text-align:center;margin-top:4px}
+  .rgpanel{display:flex;flex-direction:column}
+  .rgpanel h3{font-size:15px;margin:0 0 4px;font-weight:650}
+  .rgsel{font-size:13px;color:var(--muted);margin-bottom:12px}
+  .rgmetrics{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .rgmetrics .chip{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:3px 11px}
+  .rgover{font-size:13.5px;line-height:1.6;color:var(--ink);margin-top:14px;white-space:pre-wrap}
+
   /* explorador de notícias */
   .nbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
   .nbar span{font-size:13px;color:var(--muted)}
@@ -147,7 +168,8 @@ PAGINA = """<!doctype html>
     border-top:1px solid var(--line);margin-top:72px;line-height:1.7}
   .tech{margin-top:8px;color:var(--muted);font-size:12.5px}
 
-  @media(max-width:820px){.grid4{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:30px}}
+  @media(max-width:820px){.grid4{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:30px}
+    .mapwrap{grid-template-columns:1fr}}
 </style>
 <script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tema')||'light')}catch(e){document.documentElement.setAttribute('data-theme','light')}</script>
 </head>
@@ -179,6 +201,36 @@ PAGINA = """<!doctype html>
 
   <div class="sec">Métricas dos últimos 30 dias</div>
   <div class="grid4" id="kpis"><div class="card kpi"><div class="l">carregando</div></div></div>
+
+  <div class="sec">Mapa e análise por estado</div>
+  <div class="mapwrap">
+    <div class="card mapcard">
+      <div class="mapctl">
+        <select id="mapdias">
+          <option value="30">Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+          <option value="365">Últimos 12 meses</option>
+          <option value="0">Todo o histórico</option>
+        </select>
+        <select id="mapmetrica">
+          <option value="casos">Casos</option>
+          <option value="uti">Ocupação de UTI</option>
+          <option value="vacinacao">Vacinação</option>
+          <option value="mortalidade">Mortalidade</option>
+        </select>
+      </div>
+      <div class="map"><svg id="mapsvg" viewBox="0 0 100 93.8" role="img" aria-label="Mapa do Brasil com os estados coloridos pela métrica de SRAG"></svg></div>
+      <div class="mapesc"><span>menos</span><i></i><span>mais</span></div>
+      <div class="maplegend">Cada estado é colorido pela métrica escolhida (mais escuro é valor mais alto). Clique em um estado.</div>
+    </div>
+    <div class="card rgpanel">
+      <h3>Análise regional</h3>
+      <div class="rgsel" id="rgsel">Clique em um estado no mapa para selecioná-lo.</div>
+      <button class="btn primary" id="rgbtn" disabled>Gerar análise regional</button>
+      <div class="rgmetrics" id="rgmetrics"></div>
+      <div class="rgover" id="rgover"></div>
+    </div>
+  </div>
 
   <div class="sec">Como o agente trabalha</div>
   <div class="grid4">
@@ -329,7 +381,59 @@ $('#buscar').onclick=async e=>{
   finally{ setTimeout(()=>{b.disabled=false; b.textContent='Buscar mais';}, 1800); }
 };
 
-health(); kpis(); execucao(); fontesFiltro(); explorador();
+// mapa por UF (choropleth) + análise regional
+const NS_SVG='http://www.w3.org/2000/svg';
+let mapData=[], ufSel=null, ufNome=null, malhaPronta=false;
+const nomePorUf={};
+function corRed(t){ t=Math.max(0,Math.min(1,t)); const a=[255,241,235], b=[178,24,24];
+  return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`; }
+async function carregarMalha(){
+  try{
+    $('#mapsvg').innerHTML=await (await j('/mapa/estados.svg')).text(); malhaPronta=true;
+    $('#mapsvg').querySelectorAll('path').forEach(p=>p.onclick=()=>{ if(nomePorUf[p.id]) selUF(p.id,nomePorUf[p.id]); });
+  }catch{}
+}
+async function carregarMapa(){
+  try{ mapData=await (await j('/mapa?dias='+$('#mapdias').value)).json();
+    mapData.forEach(d=>nomePorUf[d.uf]=d.uf_nome); renderMapa(); }
+  catch{}
+}
+function renderMapa(){
+  if(!malhaPronta) return;
+  const met=$('#mapmetrica').value, rot=$('#mapmetrica').selectedOptions[0].text;
+  const byUf={}; mapData.forEach(d=>byUf[d.uf]=d);
+  const max=Math.max(1,...mapData.map(d=>d[met]).filter(v=>v!=null));
+  $('#mapsvg').querySelectorAll('path').forEach(p=>{
+    const d=byUf[p.id];
+    p.classList.toggle('sel', p.id===ufSel);
+    if(!d){ p.style.fill='var(--soft)'; return; }
+    const v=d[met];
+    p.style.fill = v==null ? '#e5e7eb' : corRed(v/max);
+    const vtxt=met==='casos'?d.casos.toLocaleString('pt-BR'):(v==null?'sem dados':v+'%');
+    let t=p.querySelector('title'); if(!t){ t=document.createElementNS(NS_SVG,'title'); p.appendChild(t); }
+    t.textContent=`${d.uf_nome}, ${d.casos.toLocaleString('pt-BR')} casos, ${rot} ${vtxt}`;
+  });
+}
+function selUF(uf,nome){ ufSel=uf; ufNome=nome;
+  $('#mapsvg').querySelectorAll('path').forEach(p=>p.classList.toggle('sel',p.id===uf));
+  $('#rgsel').textContent='Estado selecionado '+nome;
+  $('#rgbtn').disabled=false; $('#rgover').textContent=''; $('#rgmetrics').innerHTML='';
+}
+$('#mapdias').onchange=carregarMapa; $('#mapmetrica').onchange=renderMapa;
+$('#rgbtn').onclick=async()=>{
+  const b=$('#rgbtn'); if(!ufSel) return;
+  const foco=$('#mapmetrica').selectedOptions[0].text;
+  b.disabled=true; b.textContent='Gerando análise…'; $('#rgover').textContent='';
+  try{
+    const p=new URLSearchParams({uf:ufSel, uf_nome:ufNome, foco});
+    const r=await (await j('/analise/regional?'+p,{method:'POST'})).json();
+    $('#rgover').textContent=r.overview;
+    $('#rgmetrics').innerHTML=r.metricas.map(m=>`<span class="chip">${m.nome} ${m.valor==null?'N/A':m.valor+m.unidade}</span>`).join('');
+  }catch{ $('#rgover').textContent='Não foi possível gerar a análise agora.'; }
+  finally{ b.disabled=false; b.textContent='Gerar análise regional'; }
+};
+
+health(); kpis(); execucao(); fontesFiltro(); explorador(); carregarMalha().then(carregarMapa);
 </script>
 </body></html>"""
 

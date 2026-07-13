@@ -30,6 +30,18 @@ class AgregadoSRAG(BaseModel):
     vac_nao: int = 0
 
 
+class AgregadoUF(BaseModel):
+    """Casos e taxas de uma UF no período (alimenta o mapa por estado)."""
+
+    uf: str
+    uf_nome: str
+    regiao: str
+    casos: int
+    mortalidade: float | None = None
+    uti: float | None = None
+    vacinacao: float | None = None
+
+
 class Metrica(BaseModel):
     """Uma métrica calculada — valor + metadados de transparência."""
 
@@ -100,6 +112,16 @@ class ExecucaoAgente(BaseModel):
     eventos: list[EventoAuditoria]
     metricas: list[Metrica]
     noticias: list[Noticia]
+
+
+class AnaliseRegional(BaseModel):
+    """Overview regional (uma UF) gerado pelo LLM sobre as métricas daquela UF e as notícias."""
+
+    uf: str
+    uf_nome: str
+    referencia: date | None
+    metricas: list[Metrica]
+    overview: str
 
 
 class DadosRelatorio(BaseModel):

@@ -10,7 +10,7 @@ from datetime import date, timedelta
 
 from srag_report.domain import metrics
 from srag_report.domain.errors import ErroDados
-from srag_report.domain.models import Metrica, Noticia, Periodo, SeriesGraficos
+from srag_report.domain.models import AgregadoUF, Metrica, Noticia, Periodo, SeriesGraficos
 from srag_report.domain.news import filtrar_relevantes
 from srag_report.domain.ports import FonteNoticias, RepositorioDados
 
@@ -31,18 +31,19 @@ def referencia_efetiva(
 
 
 def calcular_metricas(
-    repo: RepositorioDados, referencia: date | None = None, *, dias_provisorios: int = 0
+    repo: RepositorioDados, referencia: date | None = None, *,
+    dias_provisorios: int = 0, uf: str | None = None,
 ) -> list[Metrica]:
     """As 4 métricas para os últimos 30 dias até a referência efetiva (default: último dia
-    com dado, recuado por `dias_provisorios`)."""
+    com dado, recuado por `dias_provisorios`). Filtra por `uf` quando informada."""
     ref = referencia_efetiva(repo, referencia, dias_provisorios)
     atual = Periodo(inicio=ref - timedelta(days=_JANELA_DIAS - 1), fim=ref)
     anterior = Periodo(
         inicio=ref - timedelta(days=2 * _JANELA_DIAS - 1),
         fim=ref - timedelta(days=_JANELA_DIAS),
     )
-    a = repo.agregado(atual)
-    ant = repo.agregado(anterior)
+    a = repo.agregado(atual, uf)
+    ant = repo.agregado(anterior, uf)
     return [
         metrics.taxa_aumento_casos(a.casos, ant.casos),
         metrics.taxa_mortalidade(a),
@@ -62,6 +63,15 @@ def dados_grafico(
         diaria_30d=repo.serie_diaria(Periodo(inicio=inicio_diaria, fim=ref)),
         mensal_12m=repo.serie_mensal(Periodo(inicio=inicio_mensal, fim=ref)),
     )
+
+
+def mapa_uf(
+    repo: RepositorioDados, *, dias: int | None = 30, dias_provisorios: int = 0
+) -> list[AgregadoUF]:
+    """Casos e taxas por UF no período (para o mapa). `dias=None` usa todo o histórico."""
+    ref = referencia_efetiva(repo, None, dias_provisorios)
+    inicio = ref - timedelta(days=dias - 1) if dias else date(2000, 1, 1)
+    return repo.agregado_por_uf(Periodo(inicio=inicio, fim=ref))
 
 
 def _inicio_12_meses(ref: date) -> date:

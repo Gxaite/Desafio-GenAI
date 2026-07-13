@@ -10,6 +10,7 @@ from typing import Protocol
 
 from srag_report.domain.models import (
     AgregadoSRAG,
+    AgregadoUF,
     ContagemMensal,
     DadosRelatorio,
     EventoAuditoria,
@@ -29,8 +30,12 @@ class RepositorioDados(Protocol):
         """Data do registro mais recente no mart (âncora dos períodos)."""
         ...
 
-    def agregado(self, periodo: Periodo) -> AgregadoSRAG:
-        """Soma das contagens no período (nacional)."""
+    def agregado(self, periodo: Periodo, uf: str | None = None) -> AgregadoSRAG:
+        """Soma das contagens no período (nacional, ou de uma UF quando informada)."""
+        ...
+
+    def agregado_por_uf(self, periodo: Periodo) -> list[AgregadoUF]:
+        """Casos e taxas de cada UF no período (para o mapa)."""
         ...
 
     def serie_diaria(self, periodo: Periodo) -> list[PontoSerie]:

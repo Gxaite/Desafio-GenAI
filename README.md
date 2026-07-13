@@ -85,6 +85,8 @@ Endpoints principais:
 | `POST /relatorio` | Gera o relatório PDF completo (bloqueante) |
 | `GET /relatorio/stream` | Gera o relatório emitindo o progresso do agente nó a nó (SSE) |
 | `GET /metricas` | As quatro métricas em JSON |
+| `GET /mapa` | Casos e taxas por UF no período (alimenta o mapa do hub) |
+| `POST /analise/regional` | Overview regional de uma UF gerado pelo LLM (métricas da UF + notícias) |
 | `GET /noticias` | Histórico de notícias, filtrável por `fonte` e `dias` (período) |
 | `GET /noticias/serie` e `/noticias/fontes` | Volume mensal e fontes distintas do histórico |
 | `POST /noticias/buscar` | Coleta notícias (10 consultas) e persiste no histórico; retorna quantas são novas |
@@ -222,8 +224,20 @@ métrica. Fonte oficial [Open DATASUS / SIVEP-Gripe](https://opendatasus.saude.g
 dicionário e ficha em [`data/reference/`](data/reference).
 
 <p align="center">
-  <img src="docs/assets/relatorio.png" alt="Relatório de SRAG em PDF: as quatro métricas, os dois gráficos, a narrativa e as fontes consultadas" width="640">
-  <br><sub><b>Relatório PDF</b> gerado pelo agente — as quatro métricas, os dois gráficos, a narrativa fundamentada e as fontes consultadas.</sub>
+  <img src="docs/assets/relatorio.png" alt="Relatório de SRAG em PDF com as quatro métricas, os dois gráficos, a narrativa e as fontes consultadas" width="640">
+  <br><sub><b>Relatório PDF</b> gerado pelo agente, com as quatro métricas, os dois gráficos, a narrativa fundamentada e as fontes consultadas.</sub>
+</p>
+
+### Mapa e análise regional por estado
+
+O hub traz um mapa de bolhas por UF (tamanho pelo número de casos, cor pela métrica escolhida) e
+um botão de análise regional. Ao selecionar um estado e clicar em gerar, o backend calcula as
+métricas daquela UF, busca notícias e chama o LLM (OpenRouter) para um panorama regional em
+linguagem acessível.
+
+<p align="center">
+  <img src="docs/assets/mapa-regional.png" alt="Mapa de casos por UF e painel de análise regional do Rio de Janeiro gerado pelo LLM" width="900">
+  <br><sub><b>Mapa por estado</b> e <b>análise regional</b> no hub. O texto é gerado pelo agente para a UF e o período selecionados.</sub>
 </p>
 
 ## Governança, guardrails e dados sensíveis
