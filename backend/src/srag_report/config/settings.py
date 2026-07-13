@@ -30,6 +30,8 @@ class Settings(BaseSettings):
 
     # ── NewsAPI ──
     newsapi_key: str = ""
+    # Coleta periódica do explorador de notícias (0 desativa o agendador).
+    newsapi_intervalo_horas: int = 6
     # Tracing de LLM: via OpenRouter Broadcast → LangSmith (painel do OpenRouter, sem código).
 
     @property

@@ -6,13 +6,17 @@ auditoria das execuções e explorador de notícias.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import json
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 from datetime import UTC, date, datetime, timedelta
 
+import structlog
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse, StreamingResponse
 
+from srag_report.api.agendador import loop_coleta
 from srag_report.api.landing import GRAFO, PAGINA
 from srag_report.application.noticias import atualizar_historico
 from srag_report.application.orchestration import construir_grafo
@@ -29,7 +33,29 @@ from srag_report.domain.models import (
     ResumoExecucao,
 )
 
-app = FastAPI(title="SRAG Report API", version="0.1.0")
+log = structlog.get_logger()
+
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Sobe o agendador de coleta de notícias (se habilitado) e o encerra no shutdown."""
+    tarefa: asyncio.Task[None] | None = None
+    horas = settings.newsapi_intervalo_horas
+    if settings.newsapi_key and horas > 0:
+        tarefa = asyncio.create_task(loop_coleta(horas))
+        log.info("agendador.iniciado", intervalo_horas=horas)
+    else:
+        log.info("agendador.desativado", tem_chave=bool(settings.newsapi_key), horas=horas)
+    try:
+        yield
+    finally:
+        if tarefa is not None:
+            tarefa.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await tarefa
+
+
+app = FastAPI(title="SRAG Report API", version="0.1.0", lifespan=lifespan)
 
 
 def _desde(dias: int | None) -> date | None:
