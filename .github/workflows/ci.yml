@@ -14,7 +14,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
       - name: Instalar dependências
-        run: uv pip install --system ".[dev]"
+        run: |
+          uv venv --python 3.12
+          uv pip install ".[dev]"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - name: Lint (ruff)
         run: ruff check .
       - name: Tipos (mypy)
