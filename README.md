@@ -15,7 +15,7 @@ saúde a entender a severidade e o avanço de surtos de SRAG.
 
 <p align="center">
   <img src="docs/assets/frontend.png" alt="Hub do sistema em localhost:8000: métricas ao vivo, geração de relatório e explorador de notícias" width="880">
-  <br><sub><b>Hub</b> em <code>localhost:8000</code> — métricas ao vivo, geração do relatório em tempo real e explorador de notícias (tema claro/escuro automático).</sub>
+  <br><sub><b>Hub</b> em <code>localhost:8000</code> — métricas ao vivo, geração do relatório em tempo real e explorador de notícias (tema claro por padrão, com alternância para escuro).</sub>
 </p>
 
 ## Sumário

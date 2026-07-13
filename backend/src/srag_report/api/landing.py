@@ -21,14 +21,13 @@ PAGINA = """<!doctype html>
     --radius:16px;
     --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
   }
-  @media (prefers-color-scheme:dark){
-    :root{
-      --bg:#0a0b0f; --panel:#14161f; --soft:#1b1e2a; --ink:#f1f3f8; --muted:#9aa2b1; --faint:#6a7285;
-      --line:#242838; --accent:#8b93f8; --accent2:#a78bfa; --accent-weak:#1d2133; --ok:#34d399;
-      --header:rgba(10,11,15,.72);
-      --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 32px -16px rgba(0,0,0,.6);
-      --shadow-lg:0 2px 10px rgba(0,0,0,.5), 0 30px 60px -22px rgba(0,0,0,.72);
-    }
+  /* Tema claro por padrão; escuro só quando o usuário aciona o toggle (data-theme). */
+  :root[data-theme="dark"]{
+    --bg:#0a0b0f; --panel:#14161f; --soft:#1b1e2a; --ink:#f1f3f8; --muted:#9aa2b1; --faint:#6a7285;
+    --line:#242838; --accent:#8b93f8; --accent2:#a78bfa; --accent-weak:#1d2133; --ok:#34d399;
+    --header:rgba(10,11,15,.72);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 32px -16px rgba(0,0,0,.6);
+    --shadow-lg:0 2px 10px rgba(0,0,0,.5), 0 30px 60px -22px rgba(0,0,0,.72);
   }
   *{box-sizing:border-box} html{scroll-behavior:smooth}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -51,6 +50,10 @@ PAGINA = """<!doctype html>
   .dot.on{background:var(--ok)}
   .nav a{color:var(--muted);font-size:14px;margin-left:20px}
   .nav a:hover{color:var(--ink)}
+  .tbtn{margin-left:20px;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);
+    background:var(--panel);color:var(--muted);cursor:pointer;font-size:15px;line-height:1;
+    display:grid;place-items:center;transition:.15s}
+  .tbtn:hover{color:var(--ink);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
 
   /* tudo centralizado e simétrico */
   .hero{text-align:center;padding:92px 0 24px;position:relative}
@@ -152,7 +155,9 @@ PAGINA = """<!doctype html>
   .tech{margin-top:8px;color:var(--muted);font-size:12.5px}
 
   @media(max-width:820px){.grid4{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:30px}}
-</style></head>
+</style>
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tema')||'light')}catch(e){document.documentElement.setAttribute('data-theme','light')}</script>
+</head>
 <body>
 <header><div class="wrap bar">
   <span class="brand"><span class="mark">S</span> SRAG Relatórios</span>
@@ -163,6 +168,7 @@ PAGINA = """<!doctype html>
     <a href="/docs" target="_blank">API</a>
     <a href="/agente/grafo" target="_blank">Grafo</a>
   </nav>
+  <button class="tbtn" id="theme" aria-label="Alternar tema claro/escuro" title="Alternar tema">☾</button>
 </div></header>
 
 <main class="wrap">
@@ -234,6 +240,14 @@ PAGINA = """<!doctype html>
 const $ = s => document.querySelector(s);
 async function j(u,o){ const r=await fetch(u,o); if(!r.ok) throw new Error(r.status); return r; }
 const cor = n => n.includes('mortal')?'#dc2626':n.includes('UTI')?'#2563eb':n.includes('acina')?'#7c3aed':'#4f46e5';
+
+// tema: claro por padrão, escuro via toggle (persistido em localStorage)
+const _root = document.documentElement;
+function _setTema(t){ _root.setAttribute('data-theme', t);
+  try{ localStorage.setItem('tema', t); }catch(e){}
+  const b=$('#theme'); if(b) b.textContent = t==='dark' ? '☀' : '☾'; }
+$('#theme').onclick = () => _setTema(_root.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+_setTema(_root.getAttribute('data-theme') || 'light');
 
 async function health(){
   try{ await j('/health'); $('#dot').className='dot on'; $('#livet').textContent='no ar'; }
@@ -350,9 +364,9 @@ GRAFO = """<!doctype html>
   :root{--bg:#fbfbfd;--panel:#fff;--soft:#f4f4f7;--ink:#0b0d12;--muted:#5f6673;--faint:#9aa3af;
     --line:#ebebef;--accent:#4f46e5;--accent2:#7c3aed;--accent-weak:#eef0ff;--radius:16px;
     --shadow:0 1px 2px rgba(16,18,27,.05),0 14px 30px -16px rgba(16,18,27,.16);--mono:ui-monospace,Menlo,monospace}
-  @media (prefers-color-scheme:dark){:root{--bg:#0a0b0f;--panel:#14161f;--soft:#1b1e2a;--ink:#f1f3f8;
+  :root[data-theme="dark"]{--bg:#0a0b0f;--panel:#14161f;--soft:#1b1e2a;--ink:#f1f3f8;
     --muted:#9aa2b1;--faint:#6a7285;--line:#242838;--accent:#8b93f8;--accent2:#a78bfa;--accent-weak:#1d2133;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 32px -16px rgba(0,0,0,.6)}}
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 32px -16px rgba(0,0,0,.6)}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;letter-spacing:-.005em}
@@ -366,6 +380,9 @@ GRAFO = """<!doctype html>
     display:grid;place-items:center;font-size:13px;font-weight:800}
   .sp{flex:1}
   .back{color:var(--muted);font-size:14px}.back:hover{color:var(--ink)}
+  .tbtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
+    color:var(--muted);cursor:pointer;font-size:15px;line-height:1;display:grid;place-items:center}
+  .tbtn:hover{color:var(--ink)}
   .hero{text-align:center;padding:64px 0 8px}
   .eyebrow{font-size:13px;font-weight:600;color:var(--accent)}
   h1{font-size:34px;line-height:1.1;letter-spacing:-.03em;margin:12px 0 10px;font-weight:700}
@@ -388,20 +405,23 @@ GRAFO = """<!doctype html>
   .note{color:var(--muted);font-size:13.5px;margin:16px auto 0;line-height:1.6;max-width:70ch;text-align:center}
   .src{margin-top:26px;font-size:12.5px;text-align:center}.src a{color:var(--accent)}
   footer{color:var(--faint);font-size:13px;padding:44px 0;text-align:center;border-top:1px solid var(--line);margin-top:56px}
-</style></head>
+</style>
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tema')||'light')}catch(e){document.documentElement.setAttribute('data-theme','light')}</script>
+</head>
 <body>
 <header><div class="wrap bar">
   <span class="brand"><span class="mark">S</span> SRAG Relatórios</span>
   <span class="sp"></span>
   <a class="back" href="/">voltar ao hub</a>
+  <button class="tbtn" id="theme" aria-label="Alternar tema claro/escuro" title="Alternar tema" style="margin-left:16px">☾</button>
 </div></header>
 
 <main class="wrap">
   <section class="hero">
     <div class="eyebrow">Orquestração</div>
     <h1>Fluxo do agente</h1>
-    <p>Grafo linear em LangGraph. Cada nó é um passo auditável: as três tools alimentam o
-       estado e o nó de narrativa contextualiza com o LLM.</p>
+    <p>Grafo linear em LangGraph. Cada nó é um passo determinístico e auditável, em que as três
+       tools alimentam o estado e o nó de narrativa contextualiza os números com o LLM.</p>
   </section>
 
   <div class="flow">
@@ -422,10 +442,19 @@ GRAFO = """<!doctype html>
     <span class="cap">relatório</span>
   </div>
 
-  <p class="note">Sem fallback: se dados, notícias ou LLM falharem, a execução falha
-     explicitamente (erro), em vez de gerar um relatório degradado. Cada passo grava duração
-     e resultado na trilha de auditoria.</p>
-  <p class="src">Fonte em Mermaid: <a href="/agente/grafo?format=mermaid">/agente/grafo?format=mermaid</a></p>
+  <p class="note">Este é o fluxo que o agente percorre para produzir o relatório de SRAG. As tools
+     apuram as métricas e as séries no banco e coletam as notícias, e o nó de narrativa usa o LLM
+     apenas para contextualizar os números já calculados. A execução é fail-fast e não gera
+     relatório degradado; se qualquer etapa falhar, ela é interrompida com erro e cada passo fica
+     registrado na trilha de auditoria com sua duração e resultado.</p>
+  <p class="src">Fonte em Mermaid disponível em <a href="/agente/grafo?format=mermaid">/agente/grafo?format=mermaid</a></p>
 </main>
 <footer>SRAG Relatórios · agente orquestrador em LangGraph</footer>
+<script>
+  const _r=document.documentElement;
+  function _st(t){ _r.setAttribute('data-theme',t); try{localStorage.setItem('tema',t)}catch(e){}
+    const b=document.getElementById('theme'); if(b) b.textContent=t==='dark'?'☀':'☾'; }
+  document.getElementById('theme').onclick=()=>_st(_r.getAttribute('data-theme')==='dark'?'light':'dark');
+  _st(_r.getAttribute('data-theme')||'light');
+</script>
 </body></html>"""
