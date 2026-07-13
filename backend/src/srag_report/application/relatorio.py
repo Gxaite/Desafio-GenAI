@@ -54,8 +54,9 @@ def gerar_relatorio_pdf(
     renderizador: RenderizadorRelatorio,
     referencia: date | None = None,
     auditoria: RepositorioAuditoria | None = None,
+    dias_provisorios: int = 0,
 ) -> tuple[bytes, EstadoRelatorio]:
-    estado = executar(construir_grafo(repo, fonte, llm), referencia)
+    estado = executar(construir_grafo(repo, fonte, llm, dias_provisorios), referencia)
     _persistir(auditoria, estado)
     return renderizador.renderizar(_montar_dados(estado, modelo)), estado
 
@@ -68,9 +69,10 @@ def gerar_relatorio_stream(
     renderizador: RenderizadorRelatorio,
     referencia: date | None = None,
     auditoria: RepositorioAuditoria | None = None,
+    dias_provisorios: int = 0,
 ) -> Iterator[dict[str, Any]]:
     """Executa o grafo emitindo o progresso de cada nó em tempo real; encerra com o PDF."""
-    grafo = construir_grafo(repo, fonte, llm)
+    grafo = construir_grafo(repo, fonte, llm, dias_provisorios)
     inicial: EstadoRelatorio = {"run_id": uuid.uuid4().hex, "referencia": referencia, "trilha": []}
     final: EstadoRelatorio = inicial
     emitidos = 0

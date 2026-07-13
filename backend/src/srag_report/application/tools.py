@@ -17,16 +17,25 @@ from srag_report.domain.ports import FonteNoticias, RepositorioDados
 _JANELA_DIAS = 30
 
 
-def _referencia(repo: RepositorioDados, referencia: date | None) -> date:
-    ref = referencia or repo.data_mais_recente()
+def referencia_efetiva(
+    repo: RepositorioDados, referencia: date | None = None, dias_provisorios: int = 0
+) -> date:
+    """Referência de análise. Se explícita, usa-a; senão, recua `dias_provisorios` a partir do
+    último dia com dado (exclui a cauda subnotificada por atraso de notificação — adr-0017)."""
+    if referencia is not None:
+        return referencia
+    ref = repo.data_mais_recente()
     if ref is None:
         raise ErroDados("mart vazio: rode o ETL antes de calcular métricas")
-    return ref
+    return ref - timedelta(days=dias_provisorios)
 
 
-def calcular_metricas(repo: RepositorioDados, referencia: date | None = None) -> list[Metrica]:
-    """As 4 métricas para os últimos 30 dias até `referencia` (default: dado mais recente)."""
-    ref = _referencia(repo, referencia)
+def calcular_metricas(
+    repo: RepositorioDados, referencia: date | None = None, *, dias_provisorios: int = 0
+) -> list[Metrica]:
+    """As 4 métricas para os últimos 30 dias até a referência efetiva (default: último dia
+    com dado, recuado por `dias_provisorios`)."""
+    ref = referencia_efetiva(repo, referencia, dias_provisorios)
     atual = Periodo(inicio=ref - timedelta(days=_JANELA_DIAS - 1), fim=ref)
     anterior = Periodo(
         inicio=ref - timedelta(days=2 * _JANELA_DIAS - 1),
@@ -42,9 +51,11 @@ def calcular_metricas(repo: RepositorioDados, referencia: date | None = None) ->
     ]
 
 
-def dados_grafico(repo: RepositorioDados, referencia: date | None = None) -> SeriesGraficos:
+def dados_grafico(
+    repo: RepositorioDados, referencia: date | None = None, *, dias_provisorios: int = 0
+) -> SeriesGraficos:
     """Séries dos 2 gráficos: casos diários (30 dias) e mensais (12 meses)."""
-    ref = _referencia(repo, referencia)
+    ref = referencia_efetiva(repo, referencia, dias_provisorios)
     inicio_diaria = ref - timedelta(days=_JANELA_DIAS - 1)
     inicio_mensal = _inicio_12_meses(ref)
     return SeriesGraficos(

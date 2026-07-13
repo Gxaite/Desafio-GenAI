@@ -26,7 +26,7 @@ _TEMPLATE = Template(
   .kpi .v { font-size: 25px; font-weight: 800; color: #0f172a; margin-top: 3px;
             font-variant-numeric: tabular-nums; }
   .kpi .n { font-size: 11px; font-weight: 500; color: #94a3b8; }
-  .kpi .o { font-size: 9px; color: #94a3b8; margin-top: 6px; line-height: 1.3; }
+  .kpi-nota { font-size: 9.5px; color: #94a3b8; line-height: 1.45; margin: 2px 0 4px; }
   .lab { font-size: 11px; font-weight: 700; color: #334155; text-transform: uppercase;
          letter-spacing: .04em; margin: 18px 0 6px; }
   img { width: 100%; }
@@ -47,9 +47,13 @@ _TEMPLATE = Template(
       <div class="t">{{ m.nome }}</div>
       <div class="v">{% if m.valor is none %}N/A{% else %}{{ m.valor }}{{ m.unidade }}{% endif %}</div>
       <div class="n">N = {{ m.denominador }}</div>
-      <div class="o">{{ m.observacao }}</div>
     </div>
   {% endfor %}
+  </div>
+  <div class="kpi-nota">
+    <b>N</b> = base do cálculo (casos com status conhecido). Aumento: vs. período anterior de igual
+    duração · Mortalidade: óbitos / casos com desfecho conhecido · UTI e vacinação: proxies por caso
+    (status conhecido, não leitos nem população).
   </div>
 
   <img src="{{ grafico_diario }}">
@@ -65,8 +69,9 @@ _TEMPLATE = Template(
 
   <div class="rodape">
     Gerado em {{ gerado_em }} · modelo {{ modelo }} · run {{ run_id }}.
-    Fonte: Open DATASUS (SIVEP-Gripe). UTI e vacinação são proxies por caso. Números
-    calculados deterministicamente; narrativa escrita pelo LLM sobre esses números.
+    Fonte: Open DATASUS (SIVEP-Gripe). UTI e vacinação são proxies por caso; os dias mais
+    recentes (provisórios, atraso de notificação) são excluídos. Números calculados
+    deterministicamente; narrativa escrita pelo LLM sobre esses números. Dicionário de dados no repositório.
   </div>
 </body></html>"""
 )

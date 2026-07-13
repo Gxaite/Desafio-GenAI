@@ -19,6 +19,7 @@ def main() -> None:
     pdf, estado = gerar_relatorio_pdf(
         deps.repo, deps.fonte, deps.llm, settings.openrouter_model_narrative,
         deps.renderizador, auditoria=deps.auditoria,
+        dias_provisorios=settings.dados_dias_provisorios,
     )
 
     destino = Path(settings.report_dir) / f"relatorio-srag-{estado['referencia']}.pdf"

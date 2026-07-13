@@ -22,6 +22,13 @@ As 4 métricas exigidas são **sempre calculadas em SQL/Python determinístico**
 > leitos totais nem cobertura populacional. A premissa é documentada no relatório
 > (rigor premiado em critérios de avaliação).
 
+## Dados provisórios (atraso de notificação)
+
+Os dias mais recentes da base são **subnotificados** (as notificações chegam com atraso), então a
+cauda da série cai artificialmente. Para não apresentar queda falsa, a referência recua
+`DADOS_DIAS_PROVISORIOS` dias (default 14) e as métricas/gráficos terminam no último dia
+confiável. Decisão e efeito (-35% falso → -0,48% real) em [[adr-0017-dados-provisorios]].
+
 ## Os 2 gráficos exigidos
 
 1. **Casos diários** — últimos 30 dias.

@@ -182,13 +182,21 @@ Serviços em Docker:
 
 Cada model das camadas `bronze/`, `silver/` e `gold/` é documentado nos próprios arquivos
 `.yml` (descrição de tabelas e colunas, testes), e esses docs viram comentários no Postgres
-(`persist_docs`). O dbt gera um site navegável com **lineage** a partir daí:
+(`persist_docs`). O dbt gera um site navegável com **lineage** a partir daí — via Docker
+(recomendado) ou local:
 
 ```bash
-cd dados/dbt
-dbt docs generate     # lê os .yml + introspecta o Postgres
-dbt docs serve        # abre em http://localhost:8080
+# Docker: sobe o site em http://localhost:8080 (porta configurável em DBT_DOCS_PORT)
+docker compose --profile docs up -d dbt-docs
+
+# ou local
+cd dados/dbt && dbt docs generate && dbt docs serve   # http://localhost:8080
 ```
+
+Os `README.md` de cada pasta (`models/bronze|silver|gold/`) são **gerados** a partir do
+`manifest.json`/`catalog.json` do dbt (não editados à mão) por
+[`dados/dbt/scripts/gerar_readmes.py`](dados/dbt/scripts/gerar_readmes.py) — assim ficam sempre
+em sincronia com os `.yml`.
 
 <p align="center">
   <img src="docs/assets/dbt-docs.png" alt="dbt docs: árvore bronze/silver/gold, descrição e colunas do model gold_mart_srag_diario e o lineage até o relatório PDF e o Grafana" width="900">

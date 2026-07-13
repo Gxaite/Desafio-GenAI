@@ -1,15 +1,18 @@
-# 🥉 Bronze — landing bruto
+<!-- GERADO por scripts/gerar_readmes.py a partir dos artefatos do dbt. Não edite à mão. -->
 
-Camada de entrada do medallion. Guarda os dados de origem **como chegaram**, sem transformação.
+# 🥉 Bronze
 
-| Objeto (schema) | O que é | Materialização |
+Landing bruto, carregado pelo passo EL (Python). Só as colunas necessárias (minimização LGPD).
+
+## `bronze.srag_raw` · source (via EL)
+
+Registros de SRAG (SIVEP-Gripe) 2025+2026, como texto.
+
+| Coluna | Tipo | Descrição |
 |---|---|---|
-| `bronze.srag_raw` | Registros de SRAG (SIVEP-Gripe) 2025+2026 como texto. Apenas as **~6 colunas** necessárias às métricas (minimização LGPD), mais `arquivo_origem` para proveniência. | Carregado pelo EL (Python, `COPY`) |
+| `nu_notific` | text | Número da notificação (identificador do registro na origem). |
+| `dt_sin_pri` | text | Data dos primeiros sintomas (ISO 8601, texto). |
+| `arquivo_origem` | text | Nome do CSV de origem (proveniência/lineage). |
 
-- **Declaração:** `_bronze__sources.yml` (dbt *source*; descrições e teste `not_null`).
-- **Carga:** `dados/src/srag_etl/extract_load.py` — baixa o CSV do Open DATASUS (se não houver local) e faz `COPY` para o Postgres. Proveniência registrada em `bronze.etl_run`.
-- **Próxima camada:** [../silver](../silver).
-
-Documentação completa (colunas e testes) nos arquivos `.yml` desta pasta e no site navegável
-via `dbt docs generate && dbt docs serve`. Visão geral do ETL em
-[`../../../../vault/camada-dados.md`](../../../../vault/camada-dados.md).
+---
+Documentação completa (testes, lineage) no site do dbt: `dbt docs generate && dbt docs serve` (ou `docker compose --profile docs up dbt-docs`, porta 8080).

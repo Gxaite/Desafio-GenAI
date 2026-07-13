@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     # ── App ──
     log_level: str = "INFO"
     report_dir: str = "data/processed"
+    # Dias recentes tratados como provisórios (atraso de notificação da SRAG): a referência
+    # das métricas/gráficos recua este tanto a partir do último dia, evitando a cauda
+    # subnotificada. Ver adr-0017. 0 desativa (usa o último dia com dado).
+    dados_dias_provisorios: int = 14
 
     # ── OpenRouter (LLM) ──
     openrouter_api_key: str = ""

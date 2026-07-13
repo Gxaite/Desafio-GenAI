@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from srag_report.application.tools import calcular_metricas, dados_grafico
+from srag_report.application.tools import calcular_metricas, dados_grafico, referencia_efetiva
 from srag_report.domain import metrics
 from srag_report.domain.models import AgregadoSRAG, Periodo, PontoSerie
 
@@ -82,3 +82,12 @@ def test_janela_12_meses_comeca_no_primeiro_dia() -> None:
     # 12 meses inclusivos terminando em jul/2026 → começa em ago/2025.
     assert series.mensal_12m[0].competencia == date(2025, 8, 1)
     assert series.diaria_30d[0].competencia == REF
+
+
+def test_referencia_recua_dias_provisorios() -> None:
+    # Sem referência explícita, recua os dias provisórios (atraso de notificação — adr-0017).
+    assert referencia_efetiva(_FakeRepo(), None, 14) == date(2026, 6, 21)  # 05/07 - 14
+    # Referência explícita é respeitada como está.
+    assert referencia_efetiva(_FakeRepo(), date(2026, 1, 1), 14) == date(2026, 1, 1)
+    # 0 = usa o último dia com dado.
+    assert referencia_efetiva(_FakeRepo(), None, 0) == REF

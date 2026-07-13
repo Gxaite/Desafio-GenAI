@@ -1,17 +1,21 @@
-# 🥈 Silver — limpo, tipado e deduplicado
+<!-- GERADO por scripts/gerar_readmes.py a partir dos artefatos do dbt. Não edite à mão. -->
 
-Transforma o bronze em casos prontos para agregação. Ainda a nível de caso, **não é servido**
-ao backend nem ao Grafana (só a gold cruza a fronteira).
+# 🥈 Silver
 
-| Objeto (schema) | O que é | Materialização |
+Casos limpos, tipados e deduplicados, com flags de negócio. Ainda a nível de caso; não é servido.
+
+## `silver.silver_srag_casos` · table
+
+Casos de SRAG limpos, tipados e deduplicados por notificação (1 linha/caso), com flags de negócio (óbito, UTI, vacinação e "conhecido") que alimentam o fato agregado da gold. Camada silver: ainda a nível de caso, não é servida — só a gold cruza a fronteira.
+
+| Coluna | Tipo | Descrição |
 |---|---|---|
-| `silver.silver_srag_casos` | Tipa datas (ISO → `date`), normaliza vazios, **deduplica** por notificação (1 linha por caso) e deriva as **flags de negócio** (`is_obito`, `foi_uti`, `vacinado`, `*_conhecido`) usadas pelas métricas. | table |
+| `nu_notificacao` | text | Número da notificação — chave do caso. |
+| `dt_sintomas` | date | Data dos primeiros sintomas (date). |
+| `uf` | text | UF de residência (sigla; 'NA' quando ausente). |
+| `evolucao` | text | Desfecho: 1=cura, 2=óbito, 3=óbito outras causas, 9=ignorado. |
+| `uti` | text | Internação em UTI: 1=sim, 2=não, 9=ignorado. |
+| `vacina_covid` | text | Vacinado COVID: 1=sim, 2=não, 9=ignorado. |
 
-- **Origem:** [../bronze](../bronze) (`bronze.srag_raw`).
-- **Consumida por:** [../gold](../gold) (fato e dimensões).
-- **Docs e testes:** `_silver__models.yml` — `not_null`, `unique` (notificação) e `accepted_values`
-  nos campos categóricos (`evolucao`, `uti`, `vacina_covid`).
-
-Denominadores das taxas usam só valores conhecidos (1/2); ignorados e ausentes ficam de fora.
-Site navegável via `dbt docs`. Visão geral em
-[`../../../../vault/camada-dados.md`](../../../../vault/camada-dados.md).
+---
+Documentação completa (testes, lineage) no site do dbt: `dbt docs generate && dbt docs serve` (ou `docker compose --profile docs up dbt-docs`, porta 8080).

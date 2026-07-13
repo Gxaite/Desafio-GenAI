@@ -15,7 +15,12 @@ from langgraph.graph import END, START, StateGraph
 
 from srag_report.application import narrativa as narr
 from srag_report.application.orchestration.state import EstadoRelatorio
-from srag_report.application.tools import buscar_noticias, calcular_metricas, dados_grafico
+from srag_report.application.tools import (
+    buscar_noticias,
+    calcular_metricas,
+    dados_grafico,
+    referencia_efetiva,
+)
 from srag_report.domain.models import EventoAuditoria
 from srag_report.domain.ports import FonteNoticias, ModeloLLM, RepositorioDados
 
@@ -31,14 +36,20 @@ def _evento(no: str, tipo: str, detalhe: str, inicio: datetime) -> EventoAuditor
 class _Nos:
     """Nós do grafo com as dependências injetadas (composition root as instancia)."""
 
-    def __init__(self, repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM) -> None:
+    def __init__(
+        self, repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM,
+        dias_provisorios: int = 0,
+    ) -> None:
         self._repo = repo
         self._fonte = fonte
         self._llm = llm
+        self._dias_provisorios = dias_provisorios
 
     def metricas(self, estado: EstadoRelatorio) -> EstadoRelatorio:
         t0 = datetime.now(UTC)
-        ref = estado.get("referencia") or self._repo.data_mais_recente()
+        ref = estado.get("referencia") or referencia_efetiva(
+            self._repo, None, self._dias_provisorios
+        )
         ms = calcular_metricas(self._repo, ref)
         return {"referencia": ref, "metricas": ms,
                 "trilha": [_evento("metricas", "tool", f"{len(ms)} métricas calculadas", t0)]}
@@ -66,9 +77,11 @@ class _Nos:
                 "trilha": [_evento("narrativa", "llm", f"{len(texto)} caracteres", t0)]}
 
 
-def construir_grafo(repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM) -> Any:
+def construir_grafo(
+    repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM, dias_provisorios: int = 0
+) -> Any:
     """Compila o grafo linear com as dependências injetadas."""
-    nos = _Nos(repo, fonte, llm)
+    nos = _Nos(repo, fonte, llm, dias_provisorios)
     g: Any = StateGraph(EstadoRelatorio)  # builder do LangGraph — cola de framework
     g.add_node("metricas", nos.metricas)
     g.add_node("graficos", nos.graficos)

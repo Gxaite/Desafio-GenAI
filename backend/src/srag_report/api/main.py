@@ -95,7 +95,7 @@ def metricas() -> list[Metrica]:
     """As 4 métricas dos últimos 30 dias (JSON)."""
     deps = montar_dependencias()
     try:
-        return calcular_metricas(deps.repo)
+        return calcular_metricas(deps.repo, dias_provisorios=settings.dados_dias_provisorios)
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -184,6 +184,7 @@ def relatorio() -> Response:
         pdf, estado = gerar_relatorio_pdf(
             deps.repo, deps.fonte, deps.llm, settings.openrouter_model_narrative,
             deps.renderizador, auditoria=deps.auditoria,
+            dias_provisorios=settings.dados_dias_provisorios,
         )
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -208,6 +209,7 @@ def relatorio_stream() -> StreamingResponse:
             for ev in gerar_relatorio_stream(
                 deps.repo, deps.fonte, deps.llm, settings.openrouter_model_narrative,
                 deps.renderizador, auditoria=deps.auditoria,
+                dias_provisorios=settings.dados_dias_provisorios,
             ):
                 yield f"data: {json.dumps(ev)}\n\n"
         except SragReportError as exc:
