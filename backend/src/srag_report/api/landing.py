@@ -137,9 +137,9 @@ PAGINA = """<!doctype html>
   #mapsvg path{fill:var(--soft);stroke:var(--panel);stroke-width:.3;cursor:pointer;transition:fill .2s}
   #mapsvg path:hover{stroke:var(--ink);stroke-width:.6}
   #mapsvg path.sel{stroke:var(--ink);stroke-width:.9}
-  .mapesc{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:6px;font-size:11px;color:var(--faint)}
-  .mapesc i{height:9px;width:120px;border-radius:99px;display:inline-block;
-    background:linear-gradient(90deg,#fff1eb,#b91818)}
+  .mapbins{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:8px;font-size:11px;color:var(--muted)}
+  .mapbins .bin{display:inline-flex;align-items:center;gap:5px}
+  .mapbins .bin i{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid var(--line)}
   .maplegend{font-size:11.5px;color:var(--faint);text-align:center;margin-top:4px}
   .rgpanel{display:flex;flex-direction:column}
   .rgpanel h3{font-size:15px;margin:0 0 4px;font-weight:650}
@@ -220,8 +220,8 @@ PAGINA = """<!doctype html>
         </select>
       </div>
       <div class="map"><svg id="mapsvg" viewBox="0 0 100 93.8" role="img" aria-label="Mapa do Brasil com os estados coloridos pela métrica de SRAG"></svg></div>
-      <div class="mapesc"><span>menos</span><i></i><span>mais</span></div>
-      <div class="maplegend">Cada estado é colorido pela métrica escolhida (mais escuro é valor mais alto). Clique em um estado.</div>
+      <div class="mapbins" id="mapbins"></div>
+      <div class="maplegend">Estados agrupados em faixas pela métrica escolhida (mais escuro é valor mais alto). Clique em um estado.</div>
     </div>
     <div class="card rgpanel">
       <h3>Análise regional</h3>
@@ -385,8 +385,11 @@ $('#buscar').onclick=async e=>{
 const NS_SVG='http://www.w3.org/2000/svg';
 let mapData=[], ufSel=null, ufNome=null, malhaPronta=false;
 const nomePorUf={};
-function corRed(t){ t=Math.max(0,Math.min(1,t)); const a=[255,241,235], b=[178,24,24];
-  return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`; }
+const REDS=['#fee5d9','#fcae91','#fb6a4a','#de2d26','#a50f15'];  // 5 faixas (ColorBrewer Reds)
+function quantis(vals){ const s=[...vals].sort((a,b)=>a-b); if(s.length<2) return [];
+  const q=p=>s[Math.min(s.length-1,Math.floor(p*s.length))];
+  return [q(0.2),q(0.4),q(0.6),q(0.8)]; }
+function faixa(v,th){ let i=0; for(const t of th){ if(v>=t) i++; } return Math.min(i,REDS.length-1); }
 async function carregarMalha(){
   try{
     $('#mapsvg').innerHTML=await (await j('/mapa/estados.svg')).text(); malhaPronta=true;
@@ -402,17 +405,22 @@ function renderMapa(){
   if(!malhaPronta) return;
   const met=$('#mapmetrica').value, rot=$('#mapmetrica').selectedOptions[0].text;
   const byUf={}; mapData.forEach(d=>byUf[d.uf]=d);
-  const max=Math.max(1,...mapData.map(d=>d[met]).filter(v=>v!=null));
+  const vals=mapData.map(d=>d[met]).filter(v=>v!=null);
+  const th=quantis(vals);
   $('#mapsvg').querySelectorAll('path').forEach(p=>{
     const d=byUf[p.id];
     p.classList.toggle('sel', p.id===ufSel);
     if(!d){ p.style.fill='var(--soft)'; return; }
     const v=d[met];
-    p.style.fill = v==null ? '#e5e7eb' : corRed(v/max);
+    p.style.fill = v==null ? '#e5e7eb' : REDS[faixa(v,th)];
     const vtxt=met==='casos'?d.casos.toLocaleString('pt-BR'):(v==null?'sem dados':v+'%');
     let t=p.querySelector('title'); if(!t){ t=document.createElementNS(NS_SVG,'title'); p.appendChild(t); }
     t.textContent=`${d.uf_nome}, ${d.casos.toLocaleString('pt-BR')} casos, ${rot} ${vtxt}`;
   });
+  // legenda em faixas
+  const fmt=v=>met==='casos'?Math.round(v).toLocaleString('pt-BR'):Math.round(v)+'%';
+  const edges=vals.length?[Math.min(...vals),...th]:[];
+  $('#mapbins').innerHTML=edges.map((e,i)=>`<span class="bin"><i style="background:${REDS[i]}"></i>≥ ${fmt(e)}</span>`).join('');
 }
 function selUF(uf,nome){ ufSel=uf; ufNome=nome;
   $('#mapsvg').querySelectorAll('path').forEach(p=>p.classList.toggle('sel',p.id===uf));
