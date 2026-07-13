@@ -65,6 +65,13 @@ class Noticia(BaseModel):
     capturado_em: datetime | None = None
 
 
+class ContagemMensal(BaseModel):
+    """Volume de notícias por mês (série do explorador de notícias)."""
+
+    competencia: date  # 1º dia do mês
+    total: int
+
+
 class EventoAuditoria(BaseModel):
     """Um evento da trilha de auditoria do agente (uma linha por passo)."""
 

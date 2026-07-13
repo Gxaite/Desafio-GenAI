@@ -50,7 +50,7 @@ Em seguida, abra o **hub** em **http://localhost:8000/**.
 
 | Interface | URL | Descrição |
 |---|---|---|
-| Hub | http://localhost:8000/ | Ponto de entrada: métricas ao vivo, geração de relatório em tempo real, trilha da última execução |
+| Hub | http://localhost:8000/ | Ponto de entrada: métricas ao vivo, geração de relatório em tempo real, trilha da última execução e explorador de notícias (histograma por mês, filtros por fonte e período) |
 | API (Swagger) | http://localhost:8000/docs | Documentação interativa dos endpoints |
 | Grafana | http://localhost:3000 | Dashboard interativo (usuário `admin`, senha em `GF_SECURITY_ADMIN_PASSWORD`) |
 
@@ -61,6 +61,9 @@ Endpoints principais:
 | `POST /relatorio` | Gera o relatório PDF completo (bloqueante) |
 | `GET /relatorio/stream` | Gera o relatório emitindo o progresso do agente nó a nó (SSE) |
 | `GET /metricas` | As quatro métricas em JSON |
+| `GET /noticias` | Histórico de notícias, filtrável por `fonte` e `dias` (período) |
+| `GET /noticias/serie` e `/noticias/fontes` | Volume mensal (histograma) e fontes distintas do histórico |
+| `POST /noticias/buscar` | Coleta notícias (10 consultas) e persiste no histórico; retorna quantas são novas |
 | `GET /agente/grafo` | Página do fluxo do agente (fonte Mermaid em `?format=mermaid`) |
 | `GET /auditoria/execucoes` e `/{run_id}` | Execuções do agente e a trilha detalhada (tempos, fontes) |
 | `GET /health`, `/health/db` | Liveness e readiness |

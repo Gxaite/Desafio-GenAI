@@ -7,14 +7,25 @@ from srag_report.domain.models import Noticia
 from srag_report.domain.ports import FonteNoticias, RepositorioNoticias
 
 # Consultas diversas ampliam a variedade de fontes/veículos frente a uma única busca.
-_CONSULTAS = ("SRAG", "síndrome respiratória aguda", "influenza", "gripe")
+_CONSULTAS = (
+    "SRAG",
+    "síndrome respiratória aguda grave",
+    "influenza",
+    "gripe",
+    "covid",
+    "vírus sincicial respiratório",
+    "doenças respiratórias",
+    "surto respiratório",
+    "internações respiratórias",
+    "vacina gripe",
+)
 
 
 def atualizar_historico(
     fonte: FonteNoticias,
     repo: RepositorioNoticias,
     *,
-    limite_por_consulta: int = 12,
+    limite_por_consulta: int = 20,
 ) -> int:
     """Busca notícias relevantes em várias consultas, deduplica por URL e salva. Retorna novas."""
     vistas: set[str] = set()

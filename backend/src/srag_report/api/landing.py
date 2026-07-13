@@ -104,6 +104,19 @@ PAGINA = """<!doctype html>
     padding:2px 9px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ni .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ni .dt{color:var(--faint);text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+  /* filtros + histograma do explorador */
+  .nfilters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .nfilters select{font:inherit;font-size:13px;color:var(--ink);background:var(--bg);
+    border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+  .hist{display:flex;align-items:flex-end;gap:6px;height:96px;margin:6px 0 20px;
+    padding-bottom:22px;border-bottom:1px solid var(--line)}
+  .hist .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    height:100%;position:relative;min-width:0}
+  .hist .bar{width:100%;max-width:34px;background:var(--accent);border-radius:4px 4px 0 0;
+    min-height:2px;transition:height .3s;opacity:.9}
+  .hist .col:hover .bar{opacity:1}
+  .hist .cv{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-bottom:3px}
+  .hist .cl{position:absolute;bottom:-20px;font-size:10.5px;color:var(--faint);white-space:nowrap}
 
   footer{color:var(--faint);font-size:13px;padding:56px 0 40px;text-align:center;
     border-top:1px solid var(--line);margin-top:72px;line-height:1.7}
@@ -163,6 +176,17 @@ PAGINA = """<!doctype html>
 
   <div class="sec">Explorador de notícias</div>
   <div class="card panel">
+    <div class="nfilters">
+      <select id="fperiodo">
+        <option value="30">Últimos 30 dias</option>
+        <option value="90">Últimos 90 dias</option>
+        <option value="180">Últimos 6 meses</option>
+        <option value="365">Últimos 12 meses</option>
+        <option value="">Todo o histórico</option>
+      </select>
+      <select id="ffonte"><option value="">Todas as fontes</option></select>
+    </div>
+    <div class="hist" id="hist"></div>
     <div class="nbar">
       <span id="ncount">carregando</span>
       <button class="btn ghost" id="buscar" style="padding:8px 14px">Buscar mais</button>
@@ -237,24 +261,54 @@ function gerar(){
 }
 $('#gerar').onclick=gerar; $('#gerar2').onclick=gerar;
 
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function qs(){ const d=$('#fperiodo').value, f=$('#ffonte').value;
+  const p=new URLSearchParams(); if(d)p.set('dias',d); if(f)p.set('fonte',f); return p; }
+async function fontesFiltro(){
+  try{
+    const fs = await (await j('/noticias/fontes')).json();
+    const atual=$('#ffonte').value;
+    $('#ffonte').innerHTML='<option value="">Todas as fontes</option>'+
+      fs.map(f=>`<option value="${f}">${f}</option>`).join('');
+    $('#ffonte').value=atual;
+  }catch{}
+}
+async function histograma(){
+  try{
+    const p=new URLSearchParams(); const d=$('#fperiodo').value; if(d)p.set('dias',d);
+    const s = await (await j('/noticias/serie?'+p)).json();
+    if(!s.length){ $('#hist').innerHTML=''; return; }
+    const max=Math.max(...s.map(x=>x.total));
+    $('#hist').innerHTML = s.map(x=>{
+      const dt=new Date(x.competencia), h=Math.round(100*x.total/max);
+      return `<div class="col" title="${x.total} notícias"><span class="cv">${x.total}</span>
+        <div class="bar" style="height:${h}%"></div>
+        <span class="cl">${MES[dt.getUTCMonth()]}/${String(dt.getUTCFullYear()).slice(2)}</span></div>`;
+    }).join('');
+  }catch{ $('#hist').innerHTML=''; }
+}
 async function noticias(){
   try{
-    const ns = await (await j('/noticias?limite=40')).json();
-    $('#ncount').textContent = ns.length + ' notícias no histórico';
+    const p=qs(); p.set('limite','60');
+    const ns = await (await j('/noticias?'+p)).json();
+    $('#ncount').textContent = ns.length + ' notícias no período';
     $('#news').innerHTML = ns.length ? ns.map(n=>`<a class="ni" href="${n.url}" target="_blank">
       <span class="f">${n.fonte||''}</span><span class="t">${n.titulo}</span>
       <span class="dt">${n.publicado_em||''}</span></a>`).join('')
-      : '<div style="color:var(--faint);padding:8px 4px">histórico vazio. clique em Buscar mais.</div>';
+      : '<div style="color:var(--faint);padding:8px 4px">nada neste período. amplie o filtro ou clique em Buscar mais.</div>';
   }catch{ $('#ncount').textContent='indisponível'; }
 }
+async function explorador(){ await Promise.all([histograma(), noticias()]); }
+$('#fperiodo').onchange=explorador; $('#ffonte').onchange=noticias;
 $('#buscar').onclick=async e=>{
   const b=e.target; b.disabled=true; b.textContent='buscando…';
-  try{ const r=await (await j('/noticias/buscar',{method:'POST'})).json(); b.textContent=(r.novas||0)+' novas'; await noticias(); }
+  try{ const r=await (await j('/noticias/buscar',{method:'POST'})).json(); b.textContent=(r.novas||0)+' novas';
+    await fontesFiltro(); await explorador(); }
   catch{ b.textContent='falhou'; }
   finally{ setTimeout(()=>{b.disabled=false; b.textContent='Buscar mais';}, 1800); }
 };
 
-health(); kpis(); execucao(); noticias();
+health(); kpis(); execucao(); fontesFiltro(); explorador();
 </script>
 </body></html>"""
 

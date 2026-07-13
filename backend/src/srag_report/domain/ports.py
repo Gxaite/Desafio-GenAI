@@ -10,6 +10,7 @@ from typing import Protocol
 
 from srag_report.domain.models import (
     AgregadoSRAG,
+    ContagemMensal,
     DadosRelatorio,
     EventoAuditoria,
     ExecucaoAgente,
@@ -45,7 +46,7 @@ class FonteNoticias(Protocol):
     """Fonte externa de notícias (ex.: NewsAPI)."""
 
     def buscar(self, consulta: str, *, limite: int = 5) -> list[Noticia]:
-        """Notícias mais recentes para a consulta. Pode retornar [] (degradação)."""
+        """Notícias mais recentes para a consulta. Levanta ErroFonteNoticias em falha."""
         ...
 
 
@@ -94,6 +95,16 @@ class RepositorioNoticias(Protocol):
         """Persiste as notícias novas (ignora URLs já existentes). Retorna quantas entraram."""
         ...
 
-    def listar(self, limite: int = 50, fonte: str | None = None) -> list[Noticia]:
-        """Notícias do histórico, mais recentes primeiro, opcionalmente por fonte."""
+    def listar(
+        self, limite: int = 50, fonte: str | None = None, desde: date | None = None
+    ) -> list[Noticia]:
+        """Notícias do histórico, mais recentes primeiro; filtra por fonte e/ou período."""
+        ...
+
+    def serie_mensal(self, desde: date | None = None) -> list[ContagemMensal]:
+        """Volume de notícias por mês (para o histograma do explorador)."""
+        ...
+
+    def fontes(self) -> list[str]:
+        """Fontes distintas presentes no histórico (para o filtro do explorador)."""
         ...

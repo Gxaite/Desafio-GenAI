@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -20,9 +21,22 @@ from srag_report.application.tools import calcular_metricas
 from srag_report.composition import montar_dependencias
 from srag_report.config.settings import settings
 from srag_report.domain.errors import SragReportError
-from srag_report.domain.models import ExecucaoAgente, Metrica, Noticia, ResumoExecucao
+from srag_report.domain.models import (
+    ContagemMensal,
+    ExecucaoAgente,
+    Metrica,
+    Noticia,
+    ResumoExecucao,
+)
 
 app = FastAPI(title="SRAG Report API", version="0.1.0")
+
+
+def _desde(dias: int | None) -> date | None:
+    """Converte uma janela em dias na data mínima (hoje - dias); None = sem limite."""
+    if dias is None or dias <= 0:
+        return None
+    return (datetime.now(UTC) - timedelta(days=dias)).date()
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -94,11 +108,34 @@ def obter_execucao(run_id: str) -> ExecucaoAgente:
 
 
 @app.get("/noticias")
-def noticias(limite: int = 50) -> list[Noticia]:
-    """Histórico de notícias coletadas (explorador)."""
+def noticias(
+    limite: int = 50, fonte: str | None = None, dias: int | None = None
+) -> list[Noticia]:
+    """Histórico de notícias coletadas (explorador), filtrável por fonte e período (dias)."""
+    deps = montar_dependencias()
+    desde = _desde(dias)
+    try:
+        return deps.noticias.listar(limite, fonte, desde)
+    except SragReportError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/noticias/serie")
+def noticias_serie(dias: int | None = None) -> list[ContagemMensal]:
+    """Volume de notícias por mês (histograma do explorador)."""
     deps = montar_dependencias()
     try:
-        return deps.noticias.listar(limite)
+        return deps.noticias.serie_mensal(_desde(dias))
+    except SragReportError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/noticias/fontes")
+def noticias_fontes() -> list[str]:
+    """Fontes distintas no histórico (para o filtro do explorador)."""
+    deps = montar_dependencias()
+    try:
+        return deps.noticias.fontes()
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
