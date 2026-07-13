@@ -8,7 +8,7 @@ a execução falha explicitamente — nada de relatório silenciosamente degrada
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from langgraph.graph import END, START, StateGraph
@@ -22,8 +22,15 @@ from srag_report.application.tools import (
     dados_grafico,
     referencia_efetiva,
 )
+from srag_report.domain.errors import ErroFonteNoticias
 from srag_report.domain.models import EventoAuditoria
-from srag_report.domain.ports import FonteNoticias, ModeloLLM, RepositorioDados
+from srag_report.domain.news import filtrar_relevantes
+from srag_report.domain.ports import (
+    FonteNoticias,
+    ModeloLLM,
+    RepositorioDados,
+    RepositorioNoticias,
+)
 
 
 def _evento(no: str, tipo: str, detalhe: str, inicio: datetime) -> EventoAuditoria:
@@ -39,12 +46,13 @@ class _Nos:
 
     def __init__(
         self, repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM,
-        dias_provisorios: int = 0,
+        dias_provisorios: int = 0, noticias_repo: RepositorioNoticias | None = None,
     ) -> None:
         self._repo = repo
         self._fonte = fonte
         self._llm = llm
         self._dias_provisorios = dias_provisorios
+        self._noticias_repo = noticias_repo
 
     def metricas(self, estado: EstadoRelatorio) -> EstadoRelatorio:
         t0 = datetime.now(UTC)
@@ -61,11 +69,22 @@ class _Nos:
         detalhe = f"{len(series.diaria_30d)} dias, {len(series.mensal_12m)} meses"
         return {"series": series, "trilha": [_evento("graficos", "tool", detalhe, t0)]}
 
-    def noticias(self, _estado: EstadoRelatorio) -> EstadoRelatorio:
+    def noticias(self, estado: EstadoRelatorio) -> EstadoRelatorio:
         t0 = datetime.now(UTC)
-        ns = buscar_noticias(self._fonte)  # ErroFonteNoticias sobe e falha a execução
+        try:
+            ns = buscar_noticias(self._fonte)
+            origem = "NewsAPI"
+        except ErroFonteNoticias:
+            # NewsAPI indisponível (ex.: 429). Usa o histórico já coletado no banco,
+            # em vez de derrubar o relatório (fallback só para notícias).
+            if self._noticias_repo is None:
+                raise
+            ref = estado.get("referencia")
+            desde = (ref - timedelta(days=30)) if ref else None
+            ns = filtrar_relevantes(self._noticias_repo.listar(limite=8, desde=desde))
+            origem = "histórico"
         return {"noticias": ns,
-                "trilha": [_evento("noticias", "tool", f"{len(ns)} relevantes", t0)]}
+                "trilha": [_evento("noticias", "tool", f"{len(ns)} relevantes ({origem})", t0)]}
 
     def narrativa(self, estado: EstadoRelatorio) -> EstadoRelatorio:
         t0 = datetime.now(UTC)
@@ -91,10 +110,11 @@ class _Nos:
 
 
 def construir_grafo(
-    repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM, dias_provisorios: int = 0
+    repo: RepositorioDados, fonte: FonteNoticias, llm: ModeloLLM, dias_provisorios: int = 0,
+    noticias_repo: RepositorioNoticias | None = None,
 ) -> Any:
     """Compila o grafo linear com as dependências injetadas."""
-    nos = _Nos(repo, fonte, llm, dias_provisorios)
+    nos = _Nos(repo, fonte, llm, dias_provisorios, noticias_repo)
     g: Any = StateGraph(EstadoRelatorio)  # builder do LangGraph — cola de framework
     g.add_node("metricas", nos.metricas)
     g.add_node("graficos", nos.graficos)

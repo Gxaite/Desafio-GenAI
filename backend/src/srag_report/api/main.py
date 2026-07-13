@@ -131,6 +131,7 @@ def analise(uf: str, uf_nome: str = "", foco: str = "") -> AnaliseRegional:
         return analise_regional(
             deps.repo, deps.fonte, deps.llm, uf, uf_nome or uf, foco=foco,
             dias_provisorios=settings.dados_dias_provisorios,
+            noticias_repo=deps.noticias,
         )
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -221,6 +222,7 @@ def relatorio() -> Response:
             deps.repo, deps.fonte, deps.llm, settings.openrouter_model_narrative,
             deps.renderizador, auditoria=deps.auditoria,
             dias_provisorios=settings.dados_dias_provisorios,
+            noticias_repo=deps.noticias,
         )
     except SragReportError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -246,6 +248,7 @@ def relatorio_stream() -> StreamingResponse:
                 deps.repo, deps.fonte, deps.llm, settings.openrouter_model_narrative,
                 deps.renderizador, auditoria=deps.auditoria,
                 dias_provisorios=settings.dados_dias_provisorios,
+                noticias_repo=deps.noticias,
             ):
                 yield f"data: {json.dumps(ev)}\n\n"
         except SragReportError as exc:

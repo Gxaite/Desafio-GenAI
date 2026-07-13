@@ -72,7 +72,32 @@ def test_grafo_propaga_erro_quando_llm_falha() -> None:
 
 
 def test_grafo_propaga_erro_quando_noticias_falham() -> None:
-    """Sem fallback: falha da fonte de notícias sobe como erro, não vira lista vazia."""
+    """Sem repositório de notícias: falha da fonte sobe como erro, não vira lista vazia."""
     grafo = construir_grafo(_FakeRepo(), _FonteQuebrada(), _FakeLLM())
     with pytest.raises(ErroFonteNoticias):
         executar(grafo)
+
+
+class _FakeNoticiasRepo:
+    def salvar(self, noticias: list[Noticia]) -> int:
+        return 0
+
+    def listar(self, limite: int = 50, fonte: str | None = None,
+               desde: date | None = None) -> list[Noticia]:
+        return [Noticia(titulo="SRAG no histórico do banco", fonte="Banco", url="http://h")]
+
+    def serie_mensal(self, desde: date | None = None) -> list:
+        return []
+
+    def fontes(self) -> list[str]:
+        return []
+
+
+def test_noticias_fallback_para_banco_quando_newsapi_falha() -> None:
+    """NewsAPI fora (ex.: 429) + histórico no banco: usa o histórico, não derruba o relatório."""
+    grafo = construir_grafo(_FakeRepo(), _FonteQuebrada(), _FakeLLM(),
+                            noticias_repo=_FakeNoticiasRepo())
+    estado = executar(grafo)
+    assert estado["noticias"] and estado["noticias"][0].fonte == "Banco"
+    ev = next(e for e in estado["trilha"] if e.no == "noticias")
+    assert "histórico" in ev.detalhe

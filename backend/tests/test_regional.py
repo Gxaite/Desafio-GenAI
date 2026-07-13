@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from datetime import date
 
+import pytest
+
 from srag_report.application.regional import analise_regional
+from srag_report.domain.errors import ErroFonteNoticias
 from srag_report.domain.models import AgregadoSRAG, Noticia, Periodo
 
 
@@ -40,3 +43,37 @@ def test_analise_regional_gera_overview() -> None:
     assert r.referencia == date(2026, 6, 21)  # 05/07 recuado 14 dias
     system, user = llm.prompts[0]
     assert "São Paulo" in user and "UTI" in user
+
+
+class _FonteQuebrada:
+    def buscar(self, consulta: str, *, limite: int = 5) -> list[Noticia]:
+        raise ErroFonteNoticias("429")
+
+
+class _NoticiasRepo:
+    def salvar(self, noticias: list[Noticia]) -> int:
+        return 0
+
+    def listar(self, limite: int = 50, fonte: str | None = None,
+               desde: date | None = None) -> list[Noticia]:
+        return [Noticia(titulo="SRAG no histórico do banco", fonte="Banco", url="http://h")]
+
+    def serie_mensal(self, desde: date | None = None) -> list:
+        return []
+
+    def fontes(self) -> list[str]:
+        return []
+
+
+def test_analise_regional_usa_banco_quando_newsapi_falha() -> None:
+    llm = _LLM()
+    r = analise_regional(_Repo(), _FonteQuebrada(), llm, "SP", "São Paulo",
+                         noticias_repo=_NoticiasRepo())
+    assert r.overview == "Panorama regional de teste."
+    assert "SRAG no histórico do banco" in llm.prompts[0][1]
+
+
+def test_analise_regional_sem_historico_propaga_erro() -> None:
+    """Sem repositório de notícias e NewsAPI fora, o erro sobe (não inventa dados)."""
+    with pytest.raises(ErroFonteNoticias):
+        analise_regional(_Repo(), _FonteQuebrada(), _LLM(), "SP", "São Paulo")

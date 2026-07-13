@@ -21,6 +21,7 @@ from srag_report.domain.ports import (
     RenderizadorRelatorio,
     RepositorioAuditoria,
     RepositorioDados,
+    RepositorioNoticias,
 )
 
 
@@ -60,8 +61,11 @@ def gerar_relatorio_pdf(
     referencia: date | None = None,
     auditoria: RepositorioAuditoria | None = None,
     dias_provisorios: int = 0,
+    noticias_repo: RepositorioNoticias | None = None,
 ) -> tuple[bytes, EstadoRelatorio]:
-    estado = executar(construir_grafo(repo, fonte, llm, dias_provisorios), referencia)
+    estado = executar(
+        construir_grafo(repo, fonte, llm, dias_provisorios, noticias_repo), referencia
+    )
     _persistir(auditoria, estado, modelo, "OpenRouter", getattr(llm, "total_tokens", 0))
     return renderizador.renderizar(_montar_dados(estado, modelo)), estado
 
@@ -75,9 +79,10 @@ def gerar_relatorio_stream(
     referencia: date | None = None,
     auditoria: RepositorioAuditoria | None = None,
     dias_provisorios: int = 0,
+    noticias_repo: RepositorioNoticias | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Executa o grafo emitindo o progresso de cada nó em tempo real; encerra com o PDF."""
-    grafo = construir_grafo(repo, fonte, llm, dias_provisorios)
+    grafo = construir_grafo(repo, fonte, llm, dias_provisorios, noticias_repo)
     inicial: EstadoRelatorio = {"run_id": uuid.uuid4().hex, "referencia": referencia, "trilha": []}
     final: EstadoRelatorio = inicial
     emitidos = 0
