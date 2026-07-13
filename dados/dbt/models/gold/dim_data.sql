@@ -4,7 +4,7 @@ with limites as (
     select
         min(dt_sintomas) as ini,
         max(dt_sintomas) as fim
-    from {{ ref('int_srag__casos_preparados') }}
+    from {{ ref('silver_srag_casos') }}
 
 ),
 

@@ -19,16 +19,16 @@ Motor: **EL em Python + dbt** ([[adr-0015-dbt-medallion]]).
   (sintoma na virada de ano), não duplicatas. As séries agregam por `DT_SIN_PRI`, então cada
   caso conta uma vez.
 
-## Medallion + layering idiomático dbt
+## Medallion — uma pasta por camada
 
-Medallion mapeado ao layering dbt (**staging → intermediate → marts**) e **modelagem
-dimensional** (star schema) na gold ([[adr-0016-modelagem-dimensional]]):
+Cada camada é uma **pasta dbt própria** (`models/bronze/`, `models/silver/`, `models/gold/`),
+editável isoladamente, com **modelagem dimensional** (star schema) na gold
+([[adr-0016-modelagem-dimensional]]):
 
 | Camada | Objeto (schema) | O que é | Materialização |
 |---|---|---|---|
-| 🥉 **bronze** | `bronze.srag_raw` | landing bruto (texto) + `arquivo_origem`. Só as **~6 colunas** necessárias (minimização LGPD) | EL Python (`COPY`) |
-| 🥈 **silver / staging** | `silver.stg_srag__casos` | 1:1 da fonte: renomeia, tipa (data ISO→`date`), normaliza vazios | view |
-| 🥈 **silver / intermediate** | `silver.int_srag__casos` | **dedup** por notificação + flags de negócio (`is_obito`, `foi_uti`, `vacinado`, `*_conhecido`) | table |
+| 🥉 **bronze** | `bronze.srag_raw` | landing bruto (texto) + `arquivo_origem`. Só as **~6 colunas** necessárias (minimização LGPD). Declarada como *source*; carregada pelo EL Python | EL Python (`COPY`) |
+| 🥈 **silver** | `silver.silver_srag_casos` | 1 tabela: tipa (data ISO→`date`), normaliza vazios, **dedup** por notificação e flags de negócio (`is_obito`, `foi_uti`, `vacinado`, `*_conhecido`) | table |
 | 🥇 **gold / dims** | `gold.dim_uf`, `gold.dim_data` | dimensões: UF (via **seed** → nome/região) e calendário | table |
 | 🥇 **gold / fato** | `gold.fct_srag_diario` | **fato** grão (dia, UF): medidas aditivas; FKs p/ dims | table |
 | 🥇 **gold / serviço** | `gold.gold_mart_srag_diario` | **view de serviço** (contrato do backend/Grafana): fato + `dim_uf` (nome/região) | view |
@@ -43,7 +43,7 @@ comentários no Postgres (`persist_docs`).
 
 ## Princípios
 - ETL **determinístico e idempotente** — `TRUNCATE`+recarrega bronze; `dbt build` reconstrói
-  seed + staging + intermediate + marts + testes ([[qualidade-governanca]]).
+  seed + silver + gold + testes ([[qualidade-governanca]]).
 - Proveniência registrada em `bronze.etl_run` (linhas lidas, arquivos, timestamp).
 - **Só a gold cruza a fronteira** para consumo; nenhum agregado expõe indivíduo. O bruto
   minimizado transita por bronze/silver (trade-off em [[adr-0015-dbt-medallion]]).

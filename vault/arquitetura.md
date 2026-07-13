@@ -68,7 +68,7 @@ Desafio-GenAI/
 ├── dados/                    # ── serviço ETL medallion (job) ──
 │   ├── src/srag_etl/         # EL: CSV → bronze (Python) + orquestra o dbt
 │   └── dbt/                   # transformação → [[camada-dados]]
-│       ├── models/{staging,intermediate,marts}/   # silver → gold (star schema)
+│       ├── models/{bronze,silver,gold}/   # uma pasta por camada (gold = star schema)
 │       └── seeds/            # dim_uf (código → nome/região)
 │
 └── backend/                  # ── serviço FastAPI + agente (núcleo hexagonal) ──

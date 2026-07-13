@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: silver_srag_casos
+    description: >
+      Casos de SRAG limpos, tipados e deduplicados por notificação (1 linha/caso), com flags
+      de negócio (óbito, UTI, vacinação e "conhecido") que alimentam o fato agregado da gold.
+      Camada silver: ainda a nível de caso, não é servida — só a gold cruza a fronteira.
+    columns:
+      - name: nu_notificacao
+        description: Número da notificação — chave do caso.
+        data_tests: [not_null, unique]
+      - name: dt_sintomas
+        description: Data dos primeiros sintomas (date).
+        data_tests: [not_null]
+      - name: uf
+        description: UF de residência (sigla; 'NA' quando ausente).
+        data_tests: [not_null]
+      - name: evolucao
+        description: "Desfecho: 1=cura, 2=óbito, 3=óbito outras causas, 9=ignorado."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["1", "2", "3", "9"]
+              config: { severity: warn }
+      - name: uti
+        description: "Internação em UTI: 1=sim, 2=não, 9=ignorado."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["1", "2", "9"]
+              config: { severity: warn }
+      - name: vacina_covid
+        description: "Vacinado COVID: 1=sim, 2=não, 9=ignorado."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["1", "2", "9"]
+              config: { severity: warn }

@@ -40,5 +40,13 @@ medidas, `accepted_values`, `not_null`, `unique`. **Lineage** via `exposures` (r
 - Star schema minimizado a `dim_uf` + `dim_data` por LGPD (sem dimensões demográficas de
   indivíduo) — ver [[qualidade-governanca]].
 
+## Atualização (2026-07-13) — layout por camada
+Os models passaram a ser organizados por **uma pasta por camada medallion**
+(`models/bronze/`, `models/silver/`, `models/gold/`), para tornar cada camada editável
+isoladamente e explícita na apresentação. As etapas staging + intermediate foram unidas numa
+**única tabela silver** (`silver.silver_srag_casos`: tipagem + dedup + flags). O **star schema
+da gold e o contrato de serviço `gold_mart_srag_diario` permanecem inalterados** — backend e
+Grafana não mudam. `dbt build`: 30 PASS, 0 erro.
+
 ## Relacionadas
 [[camada-dados]] · [[adr-0015-dbt-medallion]] · [[adr-0006-duckdb]] · [[metricas]]

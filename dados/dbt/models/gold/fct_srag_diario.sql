@@ -11,5 +11,5 @@ select
     count(*) filter (where uti = '2') as casos_uti_nao,
     count(*) filter (where vacinado) as vacinados,
     count(*) filter (where vacina_covid = '2') as nao_vacinados
-from {{ ref('int_srag__casos_preparados') }}
+from {{ ref('silver_srag_casos') }}
 group by dt_sintomas, uf

@@ -120,7 +120,7 @@ Serviços em Docker:
 | Serviço | Papel |
 |---|---|
 | `postgres` | Store analítico servido (camada gold) |
-| `dados` | Job de ETL: EL em Python (bronze) e **dbt** (staging, intermediate, marts em star schema) com testes de dados |
+| `dados` | Job de ETL: EL em Python (bronze) e **dbt** — uma pasta por camada (`bronze/`, `silver/`, `gold/`), star schema na gold, com testes de dados |
 | `backend` | FastAPI, agente LangGraph, tools e geração do PDF |
 | `grafana` | Dashboard interativo (lê a gold) |
 

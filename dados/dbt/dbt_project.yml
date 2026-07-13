@@ -9,17 +9,14 @@ test-paths: ["tests"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
-# Medallion mapeado ao layering idiomático dbt:
-#   bronze (source)  →  silver (staging + intermediate)  →  gold (marts: dims + fato)
+# Medallion com uma pasta por camada (editável isoladamente):
+#   bronze (source, via EL Python)  →  silver (limpeza+dedup+flags)  →  gold (star schema)
 models:
   srag:
-    staging:
-      +schema: silver
-      +materialized: view
-    intermediate:
+    silver:
       +schema: silver
       +materialized: table
-    marts:
+    gold:
       +schema: gold
       +materialized: table
       +persist_docs: { relation: true, columns: true }

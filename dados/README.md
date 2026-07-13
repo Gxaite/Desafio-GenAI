@@ -1,7 +1,8 @@
 # Serviço `dados` — ETL medallion (EL + dbt)
 
 Job que transforma o CSV bruto do Open DATASUS (SIVEP-Gripe) nos marts servidos ao backend e
-ao Grafana. Arquitetura **medallion** mapeada ao layering idiomático do dbt.
+ao Grafana. Arquitetura **medallion** com **uma pasta dbt por camada** (`bronze/`, `silver/`,
+`gold/`), editável isoladamente.
 
 ```
 CSV (data/raw)
@@ -9,8 +10,7 @@ CSV (data/raw)
    ▼
 🥉 bronze.srag_raw            landing bruto (texto) + arquivo_origem
    │  dbt
-🥈 silver.stg_srag__casos          staging: renomeia, tipa (data ISO→date), normaliza vazios (view)
-🥈 silver.int_srag__casos_preparados  intermediate: dedup por notificação + flags de negócio (table)
+🥈 silver.silver_srag_casos   tipa (data ISO→date), normaliza vazios, dedup e flags de negócio (table)
    ▼
 🥇 gold.dim_uf · gold.dim_data      dimensões (UF via seed com região; calendário)
 🥇 gold.fct_srag_diario             fato: grão (dia, UF), medidas aditivas, FKs
@@ -22,9 +22,9 @@ CSV (data/raw)
 | Caminho | Papel |
 |---|---|
 | `src/srag_etl/` | EL em Python: lê os CSVs, `COPY` para `bronze.srag_raw`, orquestra o `dbt build` |
-| `dbt/models/staging/` | `stg_*` — 1:1 da fonte (views) |
-| `dbt/models/intermediate/` | `int_*` — limpeza/dedup/flags (tables) |
-| `dbt/models/marts/` | `dim_*`, `fct_*` e a view de serviço (star schema) |
+| `dbt/models/bronze/` | `_bronze__sources.yml` — declara a landing bruta (carregada pelo EL) |
+| `dbt/models/silver/` | `silver_srag_casos` — limpeza/tipagem/dedup/flags (table) |
+| `dbt/models/gold/` | `dim_*`, `fct_*` e a view de serviço (star schema) |
 | `dbt/seeds/` | `seed_uf.csv` — mapa UF → nome/região (fonte da `dim_uf`) |
 | `dbt/tests/` | testes singulares (grão único, coerência de medidas) |
 
