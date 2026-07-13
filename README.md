@@ -139,6 +139,11 @@ flowchart TB
 Versão em PDF (entregável): [`docs/diagrama-conceitual.pdf`](docs/diagrama-conceitual.pdf),
 reproduzível com `uv run --with weasyprint python docs/gerar_diagrama.py`.
 
+<p align="center">
+  <img src="docs/assets/agente.png" alt="Grafo do agente: Orquestrador (LangGraph) ligado às tools, ao LLM, às fontes de dados, à saída PDF e à auditoria" width="820">
+  <br><sub><b>Grafo do agente</b> em <code>localhost:8000/agente/grafo</code> — visualização interativa (arraste os nós; o hover destaca as conexões) do orquestrador, das tools, do LLM e das fontes.</sub>
+</p>
+
 Camadas de código do `backend`: `domain/` (puro, sem I/O), `application/` (casos de uso,
 orquestração LangGraph e guardrails), `infrastructure/` (adapters de Postgres, NewsAPI,
 OpenRouter e relatório), além de `api/` e `composition.py` (composition root). As fronteiras do
@@ -186,6 +191,16 @@ valores conhecidos (1 ou 2). Gráficos: casos diários (30 dias) e casos mensais
   de erro no stream). Não há relatório silenciosamente degradado: se dados, notícias ou LLM
   falharem, a execução falha explicitamente, em vez de entregar um relatório que aparente estar
   completo. Ver [`adr-0010`](vault/decisoes/adr-0010-resiliencia.md).
+
+<p align="center">
+  <img src="docs/assets/guardrails.png" alt="Guardrails em quatro camadas: validação de entrada, grounding do LLM, filtro de relevância e validação de saída, com fail-fast sem fallback" width="820">
+  <br><sub><b>Guardrails</b> — quatro camadas determinísticas (da entrada à saída) mais o fail-fast: qualquer violação vira erro tipado, sem relatório degradado.</sub>
+</p>
+
+<p align="center">
+  <img src="docs/assets/auditoria.png" alt="Trilha de auditoria de uma execução: waterfall por nó (métricas, gráficos, notícias, narrativa) com durações e fontes consultadas" width="820">
+  <br><sub><b>Trilha de auditoria</b> (no hub) — cada execução tem <code>run_id</code>, o tempo de cada nó do agente e as fontes usadas; registro de decisões para governança.</sub>
+</p>
 
 ## Qualidade
 
