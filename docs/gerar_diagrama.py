@@ -1,9 +1,13 @@
-"""Gera docs/diagrama-conceitual.pdf — diagrama conceitual da arquitetura da solução.
+"""Gera o diagrama conceitual da arquitetura da solução.
 
-Reproduzível e offline: SVG desenhado à mão → PDF via WeasyPrint. Mostra o Agente Principal
-(Orquestrador), as Tools, o LLM, o banco de dados e a fonte de notícias, conforme o desafio.
+Reproduzível e offline: SVG desenhado à mão → PDF via WeasyPrint (entregável) e
+PNG via CairoSVG (usado no README, pois o GitHub renderiza imagem estática de forma
+confiável). Mostra o Agente Principal (Orquestrador), as Tools, o LLM, o banco de
+dados e a fonte de notícias, conforme o desafio.
 
-Uso:  uv run --with weasyprint python docs/gerar_diagrama.py
+Saídas:  docs/diagrama-conceitual.pdf  e  docs/assets/arquitetura.png
+
+Uso:  uv run --with weasyprint --with cairosvg python docs/gerar_diagrama.py
 """
 
 from __future__ import annotations
@@ -102,6 +106,22 @@ svg = (
 html = f'<html><head><meta charset="utf-8"><style>@page {{ size: A4 landscape; margin: 1cm; }} '
 html += f'body {{ margin: 0; }} svg {{ width: 100%; }}</style></head><body>{svg}</body></html>'
 
-destino = Path(__file__).resolve().parent / "diagrama-conceitual.pdf"
-HTML(string=html).write_pdf(str(destino))
-print("gerado:", destino)
+base = Path(__file__).resolve().parent
+
+destino_pdf = base / "diagrama-conceitual.pdf"
+HTML(string=html).write_pdf(str(destino_pdf))
+print("gerado:", destino_pdf)
+
+# PNG usado no README (2x para nitidez; fundo branco para ficar legível nos temas
+# claro e escuro do GitHub, já que o texto do diagrama é escuro).
+import cairosvg  # noqa: PLC0415  (dependência opcional, só para o PNG)
+
+destino_png = base / "assets" / "arquitetura.png"
+cairosvg.svg2png(
+    bytestring=svg.encode("utf-8"),
+    write_to=str(destino_png),
+    output_width=2 * W,
+    output_height=2 * H,
+    background_color="white",
+)
+print("gerado:", destino_png)

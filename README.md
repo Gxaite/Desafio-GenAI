@@ -105,60 +105,12 @@ Princípio-guia: o LLM orquestra e explica, o Python calcula. Todas as métricas
 determinístico; o LLM apenas narra sobre números já apurados, sem alucinar. O núcleo do backend
 segue **hexagonal (Ports & Adapters)** e os dados seguem **medallion** (bronze, silver, gold).
 
-```mermaid
-flowchart TB
-    subgraph FONTES["Fontes de dados"]
-        direction LR
-        CSV[("Open DATASUS<br/><b>SIVEP-Gripe (CSV)</b>")]
-        NEWS["NewsAPI<br/><b>notícias em tempo real</b>"]
-        LLM["Claude<br/><b>via OpenRouter</b>"]
-    end
-
-    subgraph ETL["Serviço dados, ETL medallion (dbt)"]
-        direction LR
-        BRONZE[("<b>bronze</b><br/>landing bruto")]
-        SILVER[("<b>silver</b><br/>limpo, dedup, flags")]
-        GOLD[("<b>gold</b><br/>star schema servido")]
-        BRONZE --> SILVER --> GOLD
-    end
-
-    subgraph AGENTE["Serviço backend, Agente Orquestrador (LangGraph)"]
-        direction LR
-        T1["calcular_metricas"]
-        T2["dados_grafico"]
-        T3["buscar_noticias"]
-        NARR["narrativa<br/><i>LLM grounded</i>"]
-        REL["montar relatório<br/><i>Plotly + WeasyPrint</i>"]
-        T1 --> T2 --> T3 --> NARR --> REL
-    end
-
-    CSV ==> BRONZE
-    GOLD ==> T1 & T2
-    NEWS ==> T3
-    LLM ==> NARR
-    REL ==> PDF["<b>Relatório PDF</b>"]
-    GOLD ==> GRAF["<b>Grafana</b>"]
-    AGENTE -. "registra trilha" .-> AUD[("<b>Auditoria</b><br/>por run_id")]
-
-    classDef src fill:#eef2ff,stroke:#6366f1,stroke-width:1.5px,color:#312e81;
-    classDef bronze fill:#f6e4d2,stroke:#b06f2f,stroke-width:1.5px,color:#5c3a13;
-    classDef silver fill:#e9ebef,stroke:#8a909c,stroke-width:1.5px,color:#33373f;
-    classDef gold fill:#fdf0c8,stroke:#c99a1f,stroke-width:1.5px,color:#6b5107;
-    classDef tool fill:#eef0ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81;
-    classDef out fill:#e7f6ee,stroke:#16a34a,stroke-width:1.5px,color:#0f5132;
-    classDef aud fill:#f4f4f7,stroke:#9aa3af,stroke-width:1.5px,color:#3a3f49;
-
-    class CSV,NEWS,LLM src;
-    class BRONZE bronze;
-    class SILVER silver;
-    class GOLD gold;
-    class T1,T2,T3,NARR,REL tool;
-    class PDF,GRAF out;
-    class AUD aud;
-```
+<p align="center">
+  <img src="docs/assets/arquitetura.png" alt="Diagrama conceitual da arquitetura: CSV do Open DATASUS passa pelo ETL medallion (bronze, silver, gold) no Postgres, que alimenta o Grafana e as tools do Agente Orquestrador (LangGraph) — calcular_metricas, dados_grafico, buscar_noticias na NewsAPI e narrativa via OpenRouter/Claude — culminando no Relatório PDF, com auditoria, guardrails e observabilidade transversais" width="880">
+</p>
 
 Versão em PDF (entregável): [`docs/diagrama-conceitual.pdf`](docs/diagrama-conceitual.pdf),
-reproduzível com `uv run --with weasyprint python docs/gerar_diagrama.py`.
+reproduzível (junto com o PNG acima) com `uv run --with weasyprint --with cairosvg python docs/gerar_diagrama.py`.
 
 <p align="center">
   <img src="docs/assets/agente.png" alt="Grafo do agente: Orquestrador (LangGraph) ligado às tools, ao LLM, às fontes de dados, à saída PDF e à auditoria" width="820">
