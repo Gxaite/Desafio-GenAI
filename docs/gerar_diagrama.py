@@ -5,6 +5,9 @@ PNG via CairoSVG (usado no README, pois o GitHub renderiza imagem estática de f
 confiável). Mostra o Agente Principal (Orquestrador), as Tools, o LLM, o banco de
 dados e a fonte de notícias, conforme o desafio.
 
+Layout vertical (de cima para baixo), centralizado, com as caixas dimensionadas e a
+fonte auto-ajustada para o texto nunca estourar as bordas.
+
 Saídas:  docs/diagrama-conceitual.pdf  e  docs/assets/arquitetura.png
 
 Uso:  uv run --with weasyprint --with cairosvg python docs/gerar_diagrama.py
@@ -16,94 +19,137 @@ from pathlib import Path
 
 from weasyprint import HTML
 
-W, H = 1000, 560
-
-
-def caixa(x: int, y: int, w: int, h: int, titulo: str, sub: str, fill: str, stroke: str) -> str:
-    ty = y + h / 2 + (0 if not sub else -5)
-    svg = (
-        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="9" fill="{fill}" '
-        f'stroke="{stroke}" stroke-width="1.6"/>'
-        f'<text x="{x + w / 2}" y="{ty}" text-anchor="middle" font-size="13" '
-        f'font-weight="700" fill="#0f172a">{titulo}</text>'
-    )
-    if sub:
-        svg += (
-            f'<text x="{x + w / 2}" y="{y + h / 2 + 12}" text-anchor="middle" '
-            f'font-size="9.5" fill="#475569">{sub}</text>'
-        )
-    return svg
-
-
-def seta(x1: int, y1: int, x2: int, y2: int, label: str = "") -> str:
-    svg = (
-        f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#64748b" '
-        f'stroke-width="1.6" marker-end="url(#a)"/>'
-    )
-    if label:
-        svg += (
-            f'<text x="{(x1 + x2) / 2}" y="{(y1 + y2) / 2 - 4}" text-anchor="middle" '
-            f'font-size="9" fill="#334155">{label}</text>'
-        )
-    return svg
-
+# Retrato: mais alto que largo, para o fluxo vertical respirar.
+W, H = 900, 960
+CX = W / 2  # eixo central do diagrama
 
 AZUL, ROXO, AMBAR, VERDE, SLATE = "#2563eb", "#7c3aed", "#d97706", "#059669", "#475569"
+TINTA, SUAVE = "#0f172a", "#475569"
+
+
+def _fonte(texto: str, base: float, largura_util: float, fator: float) -> float:
+    """Reduz a fonte só o necessário para o texto caber em `largura_util`."""
+    est = len(texto) * base * fator
+    if est <= largura_util:
+        return base
+    return max(7.5, largura_util / (len(texto) * fator))
+
+
+def caixa(
+    cx: float, y: float, w: float, h: float, titulo: str, sub: str,
+    fill: str, stroke: str, tbase: float = 14.5,
+) -> str:
+    """Caixa arredondada centrada em `cx`, com título e subtítulo que se ajustam à largura."""
+    x = cx - w / 2
+    util = w - 26
+    tf = _fonte(titulo, tbase, util, 0.62)
+    ty = (y + h / 2 - 5) if sub else (y + h / 2 + tf * 0.35)
+    svg = (
+        f'<rect x="{x:.1f}" y="{y:.1f}" width="{w}" height="{h}" rx="10" fill="{fill}" '
+        f'stroke="{stroke}" stroke-width="1.8"/>'
+        f'<text x="{cx:.1f}" y="{ty:.1f}" text-anchor="middle" font-size="{tf:.1f}" '
+        f'font-weight="700" fill="{TINTA}">{titulo}</text>'
+    )
+    if sub:
+        sf = _fonte(sub, 10.5, util, 0.55)
+        svg += (
+            f'<text x="{cx:.1f}" y="{y + h / 2 + 13:.1f}" text-anchor="middle" '
+            f'font-size="{sf:.1f}" fill="{SUAVE}">{sub}</text>'
+        )
+    return svg
+
+
+def seta(x1: float, y1: float, x2: float, y2: float, label: str = "") -> str:
+    """Seta com ponta; label opcional numa pílula branca ao lado da linha (sem colidir)."""
+    svg = (
+        f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{SLATE}" '
+        f'stroke-width="1.8" marker-end="url(#a)"/>'
+    )
+    if label:
+        mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+        pw = len(label) * 6.4 + 14
+        if abs(x2 - x1) < abs(y2 - y1):  # seta vertical -> pílula à direita
+            lx, ly = mx + pw / 2 + 10, my
+        else:  # seta horizontal -> pílula acima
+            lx, ly = mx, my - 13
+        svg += (
+            f'<rect x="{lx - pw / 2:.1f}" y="{ly - 9:.1f}" width="{pw:.1f}" height="18" rx="5" '
+            f'fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>'
+            f'<text x="{lx:.1f}" y="{ly + 4:.1f}" text-anchor="middle" font-size="10" '
+            f'fill="#334155">{label}</text>'
+        )
+    return svg
+
+
+# ── Geometria do fluxo vertical ────────────────────────────────────────────────
+SB = 290          # largura das caixas da espinha central
+AG_X, AG_W = CX - 155, 310   # container do agente (305..615)
+STEP_W = 270      # largura dos passos internos do agente
+
+y_csv, y_etl, y_pg = 104, 202, 300
+h_row = 64
+ag_top = y_pg + h_row + 44          # 408
+step_y = [ag_top + 46 + i * 70 for i in range(4)]  # 454, 524, 594, 664
+step_h = 56
+ag_bottom = step_y[-1] + step_h + 20
+y_rel = ag_bottom + 42
+y_band = y_rel + h_row + 30
 
 partes = [
-    # container do agente
-    f'<rect x="278" y="82" width="322" height="342" rx="12" fill="#faf5ff" '
-    f'stroke="{ROXO}" stroke-width="2"/>',
-    f'<text x="439" y="106" text-anchor="middle" font-size="13.5" font-weight="800" '
-    f'fill="{ROXO}">Agente Principal (Orquestrador) · LangGraph</text>',
-    # ── coluna de dados / ETL ──
-    caixa(40, 92, 170, 48, "CSV Open DATASUS", "SIVEP-Gripe (2025+2026)", "#dbeafe", AZUL),
-    caixa(40, 170, 170, 44, "ETL medallion (dbt)", "bronze -> silver -> gold", "#dbeafe", AZUL),
-    caixa(40, 242, 170, 56, "Postgres · camada gold", "Banco de dados (fato + dims)", "#bfdbfe", "#1d4ed8"),
-    caixa(40, 330, 170, 44, "Grafana", "dashboard (bonus)", "#d1fae5", VERDE),
-    # ── nós do agente (cada um chama uma tool) ──
-    caixa(300, 122, 200, 46, "1 · calcular_metricas", "tool -> gold", "#ede9fe", ROXO),
-    caixa(300, 184, 200, 46, "2 · dados_grafico", "tool -> gold", "#ede9fe", ROXO),
-    caixa(300, 246, 200, 46, "3 · buscar_noticias", "tool -> NewsAPI", "#ede9fe", ROXO),
-    caixa(300, 308, 200, 46, "4 · narrativa", "no -> LLM", "#ede9fe", ROXO),
-    # ── externos ──
-    caixa(672, 246, 180, 46, "NewsAPI", "fonte de noticias (tempo real)", "#fef3c7", AMBAR),
-    caixa(672, 308, 180, 46, "OpenRouter · Claude", "LLM (narrativa)", "#fef3c7", AMBAR),
+    # ── espinha: fonte -> ETL -> banco ──
+    caixa(CX, y_csv, SB, h_row, "Open DATASUS", "SIVEP-Gripe (CSV, fonte oficial)", "#dbeafe", AZUL),
+    caixa(CX, y_etl, SB, h_row, "ETL medallion (dbt)", "bronze · silver · gold", "#dbeafe", AZUL),
+    caixa(CX, y_pg, SB, h_row, "Postgres · camada gold", "banco servido (fato + dimensões)", "#bfdbfe", "#1d4ed8"),
+    # ── Grafana: saída à esquerda, alimentada pela gold ──
+    caixa(172, y_pg, 200, h_row, "Grafana", "dashboard (bônus)", "#d1fae5", VERDE),
+    # ── container do agente ──
+    f'<rect x="{AG_X:.1f}" y="{ag_top}" width="{AG_W}" height="{ag_bottom - ag_top}" rx="14" '
+    f'fill="#faf5ff" stroke="{ROXO}" stroke-width="2"/>',
+    f'<text x="{CX:.1f}" y="{ag_top + 26}" text-anchor="middle" font-size="13.5" '
+    f'font-weight="800" fill="{ROXO}">Agente Orquestrador · LangGraph</text>',
+    # ── passos do agente (cada um aciona uma tool) ──
+    caixa(CX, step_y[0], STEP_W, step_h, "1 · calcular_metricas", "consulta a gold", "#ede9fe", ROXO, 13.5),
+    caixa(CX, step_y[1], STEP_W, step_h, "2 · dados_grafico", "séries a partir da gold", "#ede9fe", ROXO, 13.5),
+    caixa(CX, step_y[2], STEP_W, step_h, "3 · buscar_noticias", "via NewsAPI", "#ede9fe", ROXO, 13.5),
+    caixa(CX, step_y[3], STEP_W, step_h, "4 · narrativa", "LLM ancorado nos dados", "#ede9fe", ROXO, 13.5),
+    # ── serviços externos à direita ──
+    caixa(762, step_y[2], 215, step_h, "NewsAPI", "notícias em tempo real", "#fef3c7", AMBAR),
+    caixa(762, step_y[3], 215, step_h, "OpenRouter · Claude", "LLM da narrativa", "#fef3c7", AMBAR),
     # ── saída ──
-    caixa(300, 442, 200, 50, "Relatorio PDF", "4 metricas · 2 graficos · narrativa", "#d1fae5", VERDE),
+    caixa(CX, y_rel, SB, h_row, "Relatório PDF", "4 métricas · 2 gráficos · narrativa", "#d1fae5", VERDE),
     # ── faixa transversal ──
-    f'<rect x="300" y="506" width="552" height="38" rx="8" fill="#e2e8f0" stroke="{SLATE}" stroke-width="1.4"/>',
-    '<text x="576" y="530" text-anchor="middle" font-size="10.5" fill="#334155">'
-    'Transversais: Auditoria &amp; Governanca (run_id) · Guardrails (grounding/validacao/filtro) '
+    f'<rect x="40" y="{y_band}" width="{W - 80}" height="46" rx="9" fill="#e2e8f0" '
+    f'stroke="{SLATE}" stroke-width="1.4"/>',
+    f'<text x="{CX:.1f}" y="{y_band + 28}" text-anchor="middle" font-size="11" fill="#334155">'
+    'Transversais · Auditoria e governança (run_id) · Guardrails (grounding, validação, filtro) '
     '· Observabilidade (structlog)</text>',
-    # ── setas ──
-    seta(125, 140, 125, 170),          # CSV -> ETL
-    seta(125, 214, 125, 242),          # ETL -> gold
-    seta(125, 298, 125, 330),          # gold -> Grafana
-    seta(210, 262, 300, 145, "SQL"),   # gold -> calcular_metricas
-    seta(210, 275, 300, 207),          # gold -> dados_grafico
-    seta(400, 168, 400, 184),          # no1 -> no2
-    seta(400, 230, 400, 246),          # no2 -> no3
-    seta(400, 292, 400, 308),          # no3 -> no4
-    seta(500, 269, 672, 269, "REST"),  # buscar_noticias -> NewsAPI
-    seta(500, 331, 672, 331, "chat"),  # narrativa -> LLM
-    seta(420, 424, 400, 442, "montar"),  # agente -> Relatorio
+    # ── setas do fluxo ──
+    seta(CX, y_csv + h_row, CX, y_etl),                       # fonte -> ETL
+    seta(CX, y_etl + h_row, CX, y_pg),                        # ETL -> banco
+    seta(CX - SB / 2, y_pg + h_row / 2, 172 + 100, y_pg + h_row / 2),  # gold -> Grafana
+    seta(CX, y_pg + h_row, CX, ag_top, "gold (SQL)"),         # gold -> agente
+    seta(CX, step_y[0] + step_h, CX, step_y[1]),              # passo 1 -> 2
+    seta(CX, step_y[1] + step_h, CX, step_y[2]),              # passo 2 -> 3
+    seta(CX, step_y[2] + step_h, CX, step_y[3]),              # passo 3 -> 4
+    seta(AG_X + AG_W, step_y[2] + step_h / 2, 762 - 215 / 2, step_y[2] + step_h / 2, "REST"),  # -> NewsAPI
+    seta(AG_X + AG_W, step_y[3] + step_h / 2, 762 - 215 / 2, step_y[3] + step_h / 2, "chat"),  # -> Claude
+    seta(CX, ag_bottom, CX, y_rel, "montar"),                 # agente -> relatório
 ]
 
 svg = (
     f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" '
-    f'font-family="DejaVu Sans, sans-serif">'
+    'font-family="DejaVu Sans, sans-serif">'
     '<defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="4" '
-    'orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#64748b"/></marker></defs>'
-    f'<text x="{W / 2}" y="42" text-anchor="middle" font-size="19" font-weight="800" '
-    'fill="#0f172a">Arquitetura Conceitual — Relatorio Automatizado de SRAG</text>'
-    f'<text x="{W / 2}" y="62" text-anchor="middle" font-size="11" fill="#64748b">'
-    'o LLM orquestra e explica; o Python calcula (nucleo hexagonal, dados em medallion)</text>'
+    f'orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="{SLATE}"/></marker></defs>'
+    f'<text x="{CX:.1f}" y="46" text-anchor="middle" font-size="21" font-weight="800" '
+    f'fill="{TINTA}">Arquitetura Conceitual — Relatório Automatizado de SRAG</text>'
+    f'<text x="{CX:.1f}" y="72" text-anchor="middle" font-size="11.5" fill="{SUAVE}">'
+    'o LLM orquestra e explica; o Python calcula (núcleo hexagonal, dados em medallion)</text>'
     + "".join(partes)
     + "</svg>"
 )
 
-html = f'<html><head><meta charset="utf-8"><style>@page {{ size: A4 landscape; margin: 1cm; }} '
+html = f'<html><head><meta charset="utf-8"><style>@page {{ size: A4 portrait; margin: 1cm; }} '
 html += f'body {{ margin: 0; }} svg {{ width: 100%; }}</style></head><body>{svg}</body></html>'
 
 base = Path(__file__).resolve().parent
